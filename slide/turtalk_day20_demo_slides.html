@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TurTalk Day 20 Demo Slides</title>
+  <style>
+    :root{
+      --bg:#06121f; --bg2:#0d2438; --ink:#f7fbff; --muted:#a7bfd3;
+      --blue:#62d6ff; --mint:#66f2b2; --yellow:#ffd166; --pink:#ff7ab6; --purple:#9b8cff;
+      --card:rgba(255,255,255,.08); --line:rgba(255,255,255,.18); --shadow:0 28px 80px rgba(0,0,0,.35);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%; margin:0; background:radial-gradient(circle at 15% 12%, #173b5c 0, transparent 36%), radial-gradient(circle at 85% 16%, rgba(102,242,178,.24) 0, transparent 30%), var(--bg); color:var(--ink); font-family:Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; overflow:hidden}
+    .deck{position:relative; width:100vw; height:100vh;}
+    .slide{position:absolute; inset:0; padding:56px 72px 58px; opacity:0; transform:translateX(32px) scale(.985); pointer-events:none; transition:.34s ease; display:grid; grid-template-rows:auto 1fr auto; gap:24px; overflow:hidden}
+    .slide.active{opacity:1; transform:none; pointer-events:auto}
+    .slide::before{content:""; position:absolute; inset:-20%; background:linear-gradient(135deg, rgba(98,214,255,.08), transparent 32%, rgba(255,122,182,.06) 70%, transparent); pointer-events:none}
+    header, main, footer{position:relative; z-index:1}
+    header{display:flex; justify-content:space-between; align-items:flex-start; gap:24px}
+    .eyebrow{font-size:14px; text-transform:uppercase; letter-spacing:.16em; color:var(--mint); font-weight:800; margin-bottom:10px}
+    h1,h2,h3,p{margin:0}
+    h1{font-size:72px; line-height:.95; letter-spacing:-.055em; max-width:940px}
+    h2{font-size:48px; line-height:1.04; letter-spacing:-.035em; max-width:980px}
+    h3{font-size:26px; line-height:1.1; letter-spacing:-.02em}
+    p,li{font-size:23px; line-height:1.38; color:#dbeaf7}
+    .big{font-size:34px; line-height:1.25; color:#fff; max-width:960px}
+    .muted{color:var(--muted)}
+    .tag{border:1px solid var(--line); background:rgba(255,255,255,.07); color:#dff7ff; border-radius:999px; padding:10px 16px; font-weight:800; white-space:nowrap}
+    .hero{display:grid; grid-template-columns:1.04fr .96fr; gap:48px; align-items:center}
+    .orb{width:450px; height:450px; border-radius:48% 52% 46% 54%; background:radial-gradient(circle at 38% 30%, #fff 0 7%, var(--blue) 8% 24%, var(--mint) 25% 48%, #20435d 49% 100%); box-shadow:var(--shadow); position:relative; margin:auto; animation:float 5s ease-in-out infinite}
+    .orb::after{content:"Start speaking"; position:absolute; left:60px; right:60px; bottom:92px; text-align:center; padding:20px 26px; border-radius:28px; background:#08182a; color:#fff; font-weight:900; font-size:28px; box-shadow:0 18px 40px rgba(0,0,0,.3)}
+    @keyframes float{50%{transform:translateY(-14px) rotate(2deg)}}
+    .grid2{display:grid; grid-template-columns:1fr 1fr; gap:24px; align-content:center}
+    .grid3{display:grid; grid-template-columns:repeat(3,1fr); gap:22px; align-content:center}
+    .card{background:var(--card); border:1px solid var(--line); border-radius:30px; padding:28px; box-shadow:0 16px 46px rgba(0,0,0,.18); backdrop-filter:blur(12px)}
+    .card h3{margin-bottom:12px}.card p,.card li{font-size:20px}.card ul{margin:12px 0 0; padding-left:24px}.accent{color:var(--mint)}.blue{color:var(--blue)}.yellow{color:var(--yellow)}.pink{color:var(--pink)}.purple{color:var(--purple)}
+    .quote{font-size:38px; line-height:1.18; font-weight:900; letter-spacing:-.035em; padding:40px; border-left:8px solid var(--yellow); background:linear-gradient(90deg, rgba(255,209,102,.12), rgba(255,255,255,.05)); border-radius:26px}
+    .flow{display:flex; align-items:center; justify-content:space-between; gap:14px; margin:auto 0}
+    .step{min-height:142px; flex:1; border-radius:28px; background:rgba(255,255,255,.08); border:1px solid var(--line); padding:24px; display:flex; flex-direction:column; justify-content:space-between}
+    .step b{font-size:18px; color:var(--mint)} .step span{font-size:22px; font-weight:800; line-height:1.15}.arrow{font-size:34px;color:var(--blue);font-weight:900}
+    .timeline{display:grid; gap:16px; margin-top:6px}.trow{display:grid; grid-template-columns:145px 1fr; gap:22px; align-items:start}.time{font-weight:900; color:var(--yellow); font-size:24px}.talk{font-size:22px; padding:18px 22px; border-radius:20px; background:rgba(255,255,255,.07); border:1px solid var(--line)}
+    .ladder{display:flex; flex-direction:column-reverse; gap:12px; width:68%; margin:0 auto}.rung{padding:18px 24px; border-radius:18px; font-size:24px; font-weight:900; color:#071421; background:linear-gradient(90deg,var(--mint),var(--blue)); box-shadow:0 10px 24px rgba(0,0,0,.16)}.rung:nth-child(2){width:92%}.rung:nth-child(3){width:84%}.rung:nth-child(4){width:76%}.rung:nth-child(5){width:68%}.rung:nth-child(6){width:60%}
+    .metric{font-size:58px; font-weight:1000; letter-spacing:-.05em; line-height:1; color:#fff}.formula{font-size:24px; color:var(--muted); margin-top:12px}
+    table{width:100%; border-collapse:collapse; overflow:hidden; border-radius:24px; font-size:18px; background:rgba(255,255,255,.07)}th,td{padding:15px 17px; text-align:left; border-bottom:1px solid rgba(255,255,255,.14)}th{color:var(--mint); font-size:17px; text-transform:uppercase; letter-spacing:.06em}td{color:#dcecff}tr:last-child td{border-bottom:0}
+    .phone{width:360px; height:620px; margin:auto; border-radius:42px; padding:22px; background:#071421; border:1px solid rgba(255,255,255,.22); box-shadow:var(--shadow)}.screen{height:100%; border-radius:30px; background:linear-gradient(180deg,#102b45,#06121f); padding:22px; display:flex; flex-direction:column; gap:16px}.pill{border-radius:999px; padding:12px 16px; background:rgba(255,255,255,.1); font-size:16px; font-weight:900}.cta{margin-top:auto; border-radius:22px; padding:20px; background:linear-gradient(90deg,var(--mint),var(--blue)); color:#06121f; font-weight:1000; text-align:center; font-size:24px}.mini{height:74px; border-radius:22px; background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.13); padding:16px; font-weight:800}
+    footer{display:flex; align-items:center; justify-content:space-between; color:rgba(255,255,255,.58); font-size:14px}.progress{height:5px; width:320px; background:rgba(255,255,255,.15); border-radius:999px; overflow:hidden}.bar{height:100%; width:0; background:linear-gradient(90deg,var(--mint),var(--blue)); transition:.25s}.controls{position:fixed; right:22px; bottom:18px; display:flex; gap:8px; z-index:20}.btn{border:1px solid rgba(255,255,255,.2); background:rgba(0,0,0,.3); color:#fff; border-radius:14px; padding:10px 13px; cursor:pointer; font-weight:900}.notes{display:none; position:fixed; left:24px; right:24px; bottom:78px; z-index:30; background:rgba(4,12,20,.92); border:1px solid rgba(255,255,255,.22); border-radius:22px; padding:20px 24px; box-shadow:var(--shadow); font-size:18px; color:#dcecff}.notes.show{display:block}.notes b{color:var(--yellow)}
+    code{background:rgba(255,255,255,.1); padding:3px 8px; border-radius:9px; color:#fff}
+    @media (max-width:900px){.slide{padding:32px 26px}.hero,.grid2,.grid3{grid-template-columns:1fr}.orb{width:260px;height:260px}.orb::after{font-size:18px;left:34px;right:34px;bottom:48px}h1{font-size:48px}h2{font-size:36px}p,li{font-size:19px}.flow{flex-direction:column}.arrow{transform:rotate(90deg)}.phone{display:none}.slide{overflow:auto}.ladder{width:100%}}
+    @media print{html,body{overflow:visible;background:white}.slide{position:relative; opacity:1; transform:none; pointer-events:auto; width:100vw; height:100vh; page-break-after:always; background:#06121f}.controls,.notes{display:none!important}}
+  </style>
+</head>
+<body>
+  <div class="deck" id="deck">
+    <section class="slide active">
+      <header><div><div class="eyebrow">TurTalk · Day 20 Demo</div><h1>Retention logic xoay quanh speaking + feedback</h1></div><span class="tag">8-minute demo</span></header>
+      <main class="hero">
+        <div><p class="big">Mục tiêu: chứng minh prototype đã dẫn học sinh đến hành động tạo giá trị thật — hoàn thành speaking session và nhìn thấy tiến bộ.</p><br><p class="muted">Dùng các phím ← → hoặc Space để trình chiếu. Nhấn P để hiện ghi chú nói.</p></div>
+        <div class="orb"></div>
+      </main>
+      <footer><span>Prepared for TurTalk Day 20</span><div class="progress"><div class="bar"></div></div><span class="count"></span></footer>
+      <aside class="speaker">Mở bằng problem rất ngắn: sản phẩm không chỉ đẹp, mà cần tạo thói quen luyện nói hằng ngày. Câu chuyện demo sẽ đi từ user pain → core action → retention metric → prototype flow.</aside>
+    </section>
+
+    <section class="slide">
+      <header><div><div class="eyebrow">01 · Product Context</div><h2>TurTalk phục vụ học sinh THCS Việt Nam đang luyện nói tiếng Anh</h2></div><span class="tag">Persona-first</span></header>
+      <main class="grid2">
+        <div class="card"><h3 class="accent">Use case chính</h3><p>Học sinh luyện nói ngắn mỗi ngày để cải thiện phản xạ và tự tin khi giao tiếp bằng tiếng Anh.</p></div>
+        <div class="card"><h3 class="blue">Đối tượng chính</h3><p>Học sinh lớp 6–9, đang học tiếng Anh ở trường, cần mục tiêu ngắn và feedback nhanh để duy trì động lực.</p></div>
+        <div class="card"><h3 class="yellow">Không tập trung</h3><p>Người đã nói thành thạo, người chỉ học ngữ pháp/reading, hoặc giáo viên/admin vì họ không nhận value chính từ speaking flow.</p></div>
+        <div class="card"><h3 class="pink">Product promise</h3><p>“Nói một chút mỗi ngày, nhận feedback ngay, thấy mình tiến bộ.”</p></div>
+      </main>
+      <footer><span>Product Context</span><div class="progress"><div class="bar"></div></div><span class="count"></span></footer>
+      <aside class="speaker">Nói rõ: demo này không cố chứng minh mọi thứ, chỉ chọn một use case đủ sắc: luyện nói ngắn hằng ngày cho học sinh THCS.</aside>
+    </section>
+
+    <section class="slide">
+      <header><div><div class="eyebrow">02 · Customer Retention Canvas</div><h2>Vấn đề thật: học sinh ngại nói và thiếu thói quen luyện đều</h2></div><span class="tag">Problem</span></header>
+      <main class="grid2">
+        <div class="quote">“Em học tiếng Anh nhưng ngại nói, không biết trả lời thế nào, và không có thói quen luyện tập đều mỗi ngày.”</div>
+        <div class="card"><h3 class="accent">Why</h3><ul><li>Muốn nói câu đơn giản đúng hơn</li><li>Bớt ngại khi phát âm và trả lời</li><li>Thấy tiến bộ nhanh thay vì học lý thuyết dài</li></ul></div>
+        <div class="card"><h3 class="yellow">Alternative</h3><ul><li>Học trên lớp và làm bài tập sách</li><li>Xem video/nghe mẫu nhưng thiếu feedback cá nhân</li><li>Bỏ qua speaking vì sợ sai</li></ul></div>
+        <div class="card"><h3 class="blue">Frequency</h3><p>Natural frequency hợp lý là daily hoặc near-daily vì speaking cần luyện ngắn, lặp lại đều.</p></div>
+      </main>
+      <footer><span>Retention Canvas</span><div class="progress"><div class="bar"></div></div><span class="count"></span></footer>
+      <aside class="speaker">Chốt ý: retention không đến từ việc ép user mở app; retention đến từ nhu cầu luyện speaking có tính lặp lại tự nhiên.</aside>
+    </section>
+
+    <section class="slide">
+      <header><div><div class="eyebrow">03 · Core Action</div><h2>Core action là hoàn thành một speaking session và nhận feedback/XP</h2></div><span class="tag">Value moment</span></header>
+      <main class="grid3">
+        <div class="card"><h3 class="accent">Không phải</h3><p>Mở app, xem dashboard, hoặc chỉ nhìn thấy lesson.</p></div>
+        <div class="card"><h3 class="blue">Mà là</h3><p>Học sinh đã nói, nộp bài, nhận feedback và thấy tiến bộ.</p></div>
+        <div class="card"><h3 class="yellow">Active user</h3><p>Một học sinh active trong ngày khi hoàn thành ít nhất 1 speaking session có feedback.</p></div>
+      </main>
+      <footer><span>Core Action</span><div class="progress"><div class="bar"></div></div><span class="count"></span></footer>
+      <aside class="speaker">Đây là điểm neo cho toàn bộ demo. Mọi flow, mission, progress đều phải phục vụ việc đưa user đến speaking session.</aside>
+    </section>
+
+    <section class="slide">
+      <header><div><div class="eyebrow">04 · Retention Metric</div><h2>Vì use case có nhịp hằng ngày, metric chính nên là DAU/WAU hoặc D7 Retention</h2></div><span class="tag">Daily habit</span></header>
+      <main class="grid2">
+        <div class="card"><div class="metric">DAU/WAU</div><p class="formula">Đo mức độ dùng lặp lại trong tuần.</p></div>
+        <div class="card"><div class="metric">D7 Retention</div><p class="formula">Đo liệu học sinh đã activated có quay lại luyện sau 7 ngày hay không.</p></div>
+        <div class="card"><h3 class="accent">Metric bổ trợ</h3><p>Số speaking sessions hoàn thành trên mỗi học sinh trong tuần.</p></div>
+        <div class="card"><h3 class="pink">Lý do phù hợp</h3><p>Speaking là bài tập ngắn, có thể quay lại nhiều lần/tuần, mục tiêu là hình thành thói quen luyện nói đều.</p></div>
+      </main>
+      <footer><span>Retention Metric</span><div class="progress"><div class="bar"></div></div><span class="count"></span></footer>
+      <aside class="speaker">Giải thích nhanh: monthly không phù hợp vì value xảy ra ở các buổi luyện ngắn; cần nhìn daily/weekly rhythm.</aside>
+    </section>
+
+    <section class="slide">
+      <header><div><div class="eyebrow">05 · Onboarding → First Core Action</div><h2>Prototype đã rút gọn đường đến first value</h2></div><span class="tag">Flow</span></header>
+      <main>
+        <div class="flow">
+          <div class="step"><b>01</b><span>Chọn grade</span></div><div class="arrow">→</div>
+          <div class="step"><b>02</b><span>Chọn placement</span></div><div class="arrow">→</div>
+          <div class="step"><b>03</b><span>Vào Trail</span></div><div class="arrow">→</div>
+          <div class="step"><b>04</b><span>Mở lesson</span></div><div class="arrow">→</div>
+          <div class="step"><b>05</b><span>Start speaking</span></div><div class="arrow">→</div>
+          <div class="step"><b>06</b><span>Feedback / XP</span></div>
+        </div>
+      </main>
+      <footer><span>First Core Action</span><div class="progress"><div class="bar"></div></div><span class="count"></span></footer>
+      <aside class="speaker">Khi demo web: đi đúng flow này. Nói “activation xảy ra khi học sinh hoàn thành session đầu tiên và nhận feedback”.</aside>
+    </section>
+
+    <section class="slide">
+      <header><div><div class="eyebrow">06 · Friction Audit</div><h2>Giữ những gì giúp định hướng, bỏ những gì chặn first value</h2></div><span class="tag">Keep / Simplify / Delay / Remove</span></header>
+      <main class="grid2">
+        <div class="card"><h3 class="accent">Keep</h3><p>Grade, placement, Trail, lesson detail — đủ để user hiểu mình sắp luyện gì.</p></div>
+        <div class="card"><h3 class="blue">Simplify</h3><p>Giảm text dài trước bài; làm CTA “Start speaking” và “Continue learning” rõ hơn.</p></div>
+        <div class="card"><h3 class="yellow">Delay</h3><p>Cài đặt phụ và profile fields không cần trước khi học sinh nhận first value.</p></div>
+        <div class="card"><h3 class="pink">Remove</h3><p>Không bắt user điền quá nhiều trường thông tin trước khi được luyện nói.</p></div>
+      </main>
+      <footer><span>Friction Audit</span><div class="progress"><div class="bar"></div></div><span class="count"></span></footer>
+      <aside class="speaker">Điểm chính: onboarding chỉ nên lấy dữ liệu giúp chọn bài nói phù hợp, không biến thành form dài.</aside>
+    </section>
+
+    <section class="slide">
+      <header><div><div class="eyebrow">07 · Recovery Path</div><h2>Khi mission chưa xong, đừng chặn user ở lỗi — hãy đưa họ về hành trình tạo value</h2></div><span class="tag">Recovery</span></header>
+      <main class="grid2">
+        <div class="phone"><div class="screen"><div class="pill">Daily Mission</div><div class="mini">Complete today’s speaking practice</div><div class="mini">Reward: +XP</div><div class="mini">Status: Not completed yet</div><div class="cta">Continue lesson</div></div></div>
+        <div class="grid2" style="align-content:center">
+          <div class="card"><h3 class="pink">Before</h3><p>Bấm <code>Claim reward</code> khi chưa hoàn thành dễ gây nhầm lẫn hoặc cảm giác lỗi.</p></div>
+          <div class="card"><h3 class="accent">After</h3><p>Hệ thống dẫn user về lesson hiện tại trong Trail để tiếp tục học.</p></div>
+          <div class="card" style="grid-column:1/-1"><h3 class="blue">Vì sao tốt cho retention</h3><p>Không dừng ở trạng thái lỗi; giữ động lực học và đưa user quay lại core action.</p></div>
+        </div>
+      </main>
+      <footer><span>Recovery Path</span><div class="progress"><div class="bar"></div></div><span class="count"></span></footer>
+      <aside class="speaker">Đây là phần demo thay đổi Before/After. Không nói là sản phẩm hoàn hảo; nói đây là logic tốt hơn để cứu hành vi học.</aside>
+    </section>
+
+    <section class="slide">
+      <header><div><div class="eyebrow">08 · Measurement Ladder</div><h2>Từ visitor đến returning active student</h2></div><span class="tag">Activation ladder</span></header>
+      <main>
+        <div class="ladder">
+          <div class="rung">6 · Returning active student</div>
+          <div class="rung">5 · Activated student</div>
+          <div class="rung">4 · First speaking session completed</div>
+          <div class="rung">3 · First speaking session started</div>
+          <div class="rung">2 · Onboarding completed</div>
+          <div class="rung">1 · Visitor / Signed-in student</div>
+        </div>
+      </main>
+      <footer><span>Measurement Ladder</span><div class="progress"><div class="bar"></div></div><span class="count"></span></footer>
+      <aside class="speaker">Dùng ladder để giải thích measurement không nhảy thẳng đến retention. Phải đo từng bước user có đi đến value hay không.</aside>
+    </section>
+
+    <section class="slide">
+      <header><div><div class="eyebrow">09 · North Star Metric</div><h2>North Star: số speaking sessions hoàn thành có feedback mỗi tuần</h2></div><span class="tag">Weekly value</span></header>
+      <main class="grid2">
+        <div class="card"><div class="metric">Weekly Completed Sessions</div><p class="formula">Tổng speaking sessions hoàn thành có feedback mỗi tuần.</p></div>
+        <div class="card"><h3 class="accent">Input metrics</h3><ul><li>Onboarding completion rate</li><li>Tỷ lệ bắt đầu speaking session đầu tiên</li><li>Daily missions completed / rewards claimed</li></ul></div>
+        <div class="card"><h3 class="blue">Leading</h3><p>onboarding completed, session started, mission completed.</p></div>
+        <div class="card"><h3 class="pink">Lagging</h3><p>weekly retained students, sessions completed, XP/progress level.</p></div>
+      </main>
+      <footer><span>North Star</span><div class="progress"><div class="bar"></div></div><span class="count"></span></footer>
+      <aside class="speaker">Nhắc trade-off: gamification quá mạnh có thể khiến user chạy theo XP thay vì chất lượng speaking thật.</aside>
+    </section>
+
+    <section class="slide">
+      <header><div><div class="eyebrow">10 · Nature vs Nurture</div><h2>Daily missions không tạo habit giả; chúng khuếch đại một nhu cầu có thật</h2></div><span class="tag">Habit design</span></header>
+      <main class="grid2">
+        <div class="card"><h3 class="accent">Nature</h3><p>Nhu cầu speaking practice có nhịp daily/near-daily. Mỗi lần học ngắn, cần nhắc lại thường xuyên.</p></div>
+        <div class="card"><h3 class="blue">Nurture</h3><p>Daily missions, XP, streak, progress, Continue learning CTA, hero và mission overview.</p></div>
+        <div class="card" style="grid-column:1/-1"><h3 class="yellow">Logic</h3><p>Nurture layer hợp lý vì nó tăng động lực cho hành vi có utility thật, không ép một use case frequency thấp thành habit nhân tạo.</p></div>
+      </main>
+      <footer><span>Nature vs Nurture</span><div class="progress"><div class="bar"></div></div><span class="count"></span></footer>
+      <aside class="speaker">Nói ngắn: mission, XP, streak không phải mục tiêu cuối; chúng là đường ray đưa user quay lại speaking + feedback.</aside>
+    </section>
+
+    <section class="slide">
+      <header><div><div class="eyebrow">11 · Hook Model</div><h2>Trigger → Action → Reward → Investment</h2></div><span class="tag">Hook review</span></header>
+      <main class="grid2">
+        <div class="card"><h3 class="pink">Internal Trigger</h3><p>“Em sợ mình nói chưa tốt”, “em cần luyện trước buổi học/kiểm tra”, “em muốn giữ streak”.</p></div>
+        <div class="card"><h3 class="blue">External Trigger</h3><p>Daily mission, Continue learning CTA, progress / streak / XP trên dashboard.</p></div>
+        <div class="card"><h3 class="accent">Action</h3><p>Mở lesson hiện tại → Start speaking → hoàn thành session.</p></div>
+        <div class="card"><h3 class="yellow">Reward + Investment</h3><p>Feedback, XP, completion, mission reward; tích lũy progress/streak để có lý do quay lại.</p></div>
+      </main>
+      <footer><span>Hook Model</span><div class="progress"><div class="bar"></div></div><span class="count"></span></footer>
+      <aside class="speaker">Reward chính là “The Self”: học sinh thấy mình tiến bộ, không chỉ nhận điểm.</aside>
+    </section>
+
+    <section class="slide">
+      <header><div><div class="eyebrow">12 · Tracking Requirement</div><h2>Tracking phải ghi nhận hành vi thật, không ghi trùng vì refresh</h2></div><span class="tag">Instrumentation</span></header>
+      <main>
+        <table>
+          <thead><tr><th>Event</th><th>Ghi khi nào</th><th>Properties chính</th></tr></thead>
+          <tbody>
+            <tr><td><code>onboarding_completed</code></td><td>User lưu xong grade + placement</td><td>user_id, grade_level, placement_level</td></tr>
+            <tr><td><code>lesson_opened</code></td><td>User mở lesson detail</td><td>user_id, unit_id, lesson_id</td></tr>
+            <tr><td><code>speaking_session_started</code></td><td>User bắt đầu session</td><td>user_id, lesson_id, topic_version_id, source</td></tr>
+            <tr><td><code>speaking_session_completed</code></td><td>User hoàn thành session</td><td>user_id, lesson_id, session_id, xp_earned</td></tr>
+            <tr><td><code>mission_reward_claimed</code></td><td>Claim mission thành công</td><td>user_id, mission_id, mission_type, reward_points</td></tr>
+          </tbody>
+        </table>
+      </main>
+      <footer><span>Tracking</span><div class="progress"><div class="bar"></div></div><span class="count"></span></footer>
+      <aside class="speaker">Nêu nguyên tắc: chỉ ghi event khi hành vi thật xảy ra; completion không duplicate khi refresh; reward chỉ ghi khi transition sang claim thành công.</aside>
+    </section>
+
+    <section class="slide">
+      <header><div><div class="eyebrow">13 · Demo Path</div><h2>Script trình bày trong 8 phút</h2></div><span class="tag">Run of show</span></header>
+      <main class="timeline">
+        <div class="trow"><div class="time">0:00–1:00</div><div class="talk">Problem, persona, why, alternative.</div></div>
+        <div class="trow"><div class="time">1:00–1:50</div><div class="talk">Natural frequency, core action, active user definition.</div></div>
+        <div class="trow"><div class="time">1:50–2:40</div><div class="talk">DAU/WAU, D7 retention, lý do phù hợp với speaking ngắn hằng ngày.</div></div>
+        <div class="trow"><div class="time">2:40–4:20</div><div class="talk">Demo web: onboarding → trail → unit → lesson → start speaking → feedback/progress.</div></div>
+        <div class="trow"><div class="time">4:20–6:20</div><div class="talk">Progress/Missions: North Star, input metrics, Nature vs Nurture, Hook Model.</div></div>
+        <div class="trow"><div class="time">6:20–8:00</div><div class="talk">Tracking events, kết luận: retention xoay quanh speaking + feedback + tiến bộ.</div></div>
+      </main>
+      <footer><span>8-Minute Demo</span><div class="progress"><div class="bar"></div></div><span class="count"></span></footer>
+      <aside class="speaker">Đây là slide dùng làm checklist khi nói. Nếu thiếu thời gian, ưu tiên core action, demo flow, North Star, tracking.</aside>
+    </section>
+
+    <section class="slide">
+      <header><div><div class="eyebrow">14 · Demo-safe Close</div><h2>Câu trả lời an toàn khi bị hỏi: prototype vs phân tích</h2></div><span class="tag">Closing line</span></header>
+      <main class="grid2">
+        <div class="quote" style="grid-column:1/-1">“Prototype web thể hiện product flow và retention mechanism chính: onboarding, trail, mission, progress, XP và recovery path.”</div>
+        <div class="card"><h3 class="blue">Phần trên prototype</h3><p>Onboarding, Trail, Unit/Lesson, speaking entry, Missions, Progress, XP, streak, level, recovery flow.</p></div>
+        <div class="card"><h3 class="yellow">Phần phân tích</h3><p>Retention canvas, core action, measurement ladder, hook review và tracking requirement được tổng hợp thành slide để giải thích logic phía sau prototype.</p></div>
+      </main>
+      <footer><span>Wrap-up</span><div class="progress"><div class="bar"></div></div><span class="count"></span></footer>
+      <aside class="speaker">Kết bằng một câu: thay đổi quan trọng nhất là đưa user về speaking session nhanh hơn; mission và progress chỉ phục vụ việc quay lại học.</aside>
+    </section>
+  </div>
+  <div class="notes" id="notes"></div>
+  <div class="controls"><button class="btn" id="prev">←</button><button class="btn" id="next">→</button><button class="btn" id="noteBtn">P</button></div>
+  <script>
+    const slides=[...document.querySelectorAll('.slide')];
+    const notes=document.getElementById('notes');
+    let i=0;
+    function render(){
+      slides.forEach((s,idx)=>s.classList.toggle('active',idx===i));
+      document.querySelectorAll('.count').forEach(c=>c.textContent=`${i+1}/${slides.length}`);
+      document.querySelectorAll('.bar').forEach(b=>b.style.width=`${((i+1)/slides.length)*100}%`);
+      const speaker=slides[i].querySelector('.speaker')?.innerHTML || '';
+      notes.innerHTML='<b>Ghi chú nói:</b> '+speaker;
+      location.hash=`slide-${i+1}`;
+    }
+    function next(){i=Math.min(slides.length-1,i+1); render()}
+    function prev(){i=Math.max(0,i-1); render()}
+    document.getElementById('next').onclick=next; document.getElementById('prev').onclick=prev;
+    document.getElementById('noteBtn').onclick=()=>notes.classList.toggle('show');
+    addEventListener('keydown',e=>{
+      if(['ArrowRight','PageDown',' '].includes(e.key)){e.preventDefault();next()}
+      if(['ArrowLeft','PageUp','Backspace'].includes(e.key)){e.preventDefault();prev()}
+      if(e.key.toLowerCase()==='p') notes.classList.toggle('show');
+      if(e.key.toLowerCase()==='f') document.documentElement.requestFullscreen?.();
+    });
+    const m=location.hash.match(/slide-(\d+)/); if(m) i=Math.min(slides.length-1,Math.max(0,+m[1]-1)); render();
+  </script>
+</body>
+</html>
