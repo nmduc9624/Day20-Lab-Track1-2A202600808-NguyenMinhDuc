@@ -1,0 +1,3150 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Prototype Day 20 - TurTalk</title>
+  <style>
+    :root {
+      --bg: #080914;
+      --panel: rgba(255, 255, 255, 0.09);
+      --panel-strong: rgba(255, 255, 255, 0.14);
+      --stroke: rgba(255, 255, 255, 0.18);
+      --text: #f7f8ff;
+      --muted: #aab0d6;
+      --cyan: #37e6ff;
+      --lime: #9aff72;
+      --rose: #ff6f9f;
+      --amber: #ffd36b;
+      --violet: #936dff;
+      --navy: #12142b;
+      --shadow: 0 24px 70px rgba(0, 0, 0, 0.45);
+      --radius: 8px;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      background:
+        radial-gradient(circle at 18% 14%, rgba(55, 230, 255, 0.24), transparent 28%),
+        radial-gradient(circle at 85% 12%, rgba(154, 255, 114, 0.16), transparent 24%),
+        linear-gradient(145deg, #080914 0%, #141532 45%, #0c1027 100%);
+      color: var(--text);
+    }
+
+    body {
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      overflow: hidden;
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+      border: 0;
+    }
+
+    .app-shell {
+      width: min(100%, 390px);
+      height: min(820px, calc(100vh - 48px));
+      min-height: 560px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 34px;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.10), rgba(255, 255, 255, 0.03)),
+        rgba(8, 9, 20, 0.78);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      position: relative;
+      backdrop-filter: blur(22px);
+    }
+
+    .status-bar {
+      height: 34px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      color: rgba(255, 255, 255, 0.74);
+      font-size: 12px;
+      letter-spacing: 0;
+    }
+
+    .camera-pill {
+      width: 68px;
+      height: 22px;
+      border-radius: 999px;
+      background: rgba(0, 0, 0, 0.36);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .screen {
+      display: none;
+      height: calc(min(820px, calc(100vh - 48px)) - 34px);
+      min-height: 526px;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 20px 22px 24px;
+      position: relative;
+      scrollbar-width: none;
+    }
+
+    .screen::-webkit-scrollbar {
+      display: none;
+    }
+
+    .screen.active {
+      display: flex;
+      flex-direction: column;
+      animation: screenIn 360ms ease both;
+    }
+
+    @keyframes screenIn {
+      from {
+        transform: translateY(12px);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    h1,
+    h2,
+    h3,
+    p {
+      margin: 0;
+    }
+
+    h1 {
+      font-size: 46px;
+      line-height: 0.96;
+      letter-spacing: 0;
+      max-width: 340px;
+    }
+
+    h2 {
+      font-size: 30px;
+      line-height: 1.08;
+      letter-spacing: 0;
+    }
+
+    h3 {
+      font-size: 17px;
+      letter-spacing: 0;
+    }
+
+    p,
+    li {
+      color: var(--muted);
+      line-height: 1.5;
+      overflow-wrap: anywhere;
+    }
+
+    .top-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .subtle {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .primary-btn,
+    .ghost-btn,
+    .pill-btn {
+      min-height: 52px;
+      border-radius: var(--radius);
+      color: var(--text);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease, background 180ms ease;
+      user-select: none;
+      min-width: 0;
+      text-align: center;
+      white-space: normal;
+    }
+
+    .primary-btn {
+      width: 100%;
+      padding: 0 18px;
+      background: linear-gradient(135deg, #37e6ff, #936dff 58%, #ff6f9f);
+      box-shadow: 0 0 28px rgba(55, 230, 255, 0.34), 0 14px 28px rgba(0, 0, 0, 0.28);
+      font-weight: 800;
+    }
+
+    .primary-btn:hover,
+    .ghost-btn:hover,
+    .pill-btn:hover {
+      transform: translateY(-1px);
+    }
+
+    .ghost-btn {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--stroke);
+      padding: 0 16px;
+      color: #dee4ff;
+    }
+
+    .pill-btn {
+      min-height: 38px;
+      border-radius: 999px;
+      padding: 0 14px;
+      background: rgba(255, 255, 255, 0.09);
+      border: 1px solid var(--stroke);
+      color: #e8ebff;
+      font-size: 13px;
+    }
+
+    .back-btn,
+    .icon-btn {
+      width: 42px;
+      height: 42px;
+      border-radius: var(--radius);
+      display: grid;
+      place-items: center;
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--stroke);
+    }
+
+    .footer-actions {
+      margin-top: auto;
+      display: grid;
+      gap: 12px;
+    }
+
+    .progress-dots {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .progress-dots span {
+      width: 7px;
+      height: 7px;
+      border-radius: 99px;
+      background: rgba(255, 255, 255, 0.25);
+    }
+
+    .progress-dots span.active-dot {
+      width: 20px;
+      background: var(--cyan);
+      box-shadow: 0 0 16px rgba(55, 230, 255, 0.8);
+    }
+
+    .glass-card {
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.06));
+      border: 1px solid var(--stroke);
+      border-radius: var(--radius);
+      box-shadow: 0 18px 36px rgba(0, 0, 0, 0.18);
+      backdrop-filter: blur(18px);
+    }
+
+    .welcome-art {
+      height: 330px;
+      position: relative;
+      display: grid;
+      place-items: center;
+      margin: 16px 0 8px;
+      isolation: isolate;
+    }
+
+    .welcome-art::before {
+      content: "";
+      width: 270px;
+      height: 270px;
+      border-radius: 50%;
+      position: absolute;
+      background:
+        radial-gradient(circle at 50% 42%, rgba(55, 230, 255, 0.28), transparent 58%),
+        conic-gradient(from 110deg, rgba(55, 230, 255, 0), rgba(55, 230, 255, 0.42), rgba(255, 111, 159, 0.32), rgba(154, 255, 114, 0.28), rgba(55, 230, 255, 0));
+      filter: blur(2px);
+      animation: slowSpin 9s linear infinite;
+      z-index: -1;
+    }
+
+    @keyframes slowSpin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .owl {
+      width: 214px;
+      height: 250px;
+      position: relative;
+      animation: float 3s ease-in-out infinite;
+      filter: drop-shadow(0 28px 22px rgba(0, 0, 0, 0.34));
+    }
+
+    .owl-body {
+      position: absolute;
+      inset: 34px 24px 0;
+      border-radius: 46% 46% 38% 38%;
+      background:
+        radial-gradient(circle at 35% 28%, rgba(255, 255, 255, 0.90), transparent 15%),
+        linear-gradient(145deg, #dfe8ff 0%, #9fb3ff 38%, #5546c9 100%);
+      border: 1px solid rgba(255, 255, 255, 0.56);
+    }
+
+    .owl-ear {
+      position: absolute;
+      top: 24px;
+      width: 52px;
+      height: 60px;
+      background: linear-gradient(145deg, #a9bcff, #6954df);
+      border-radius: 9px 34px 18px;
+    }
+
+    .owl-ear.left {
+      left: 46px;
+      transform: rotate(-28deg);
+    }
+
+    .owl-ear.right {
+      right: 46px;
+      transform: rotate(28deg) scaleX(-1);
+    }
+
+    .owl-face {
+      position: absolute;
+      top: 58px;
+      left: 39px;
+      right: 39px;
+      height: 94px;
+      border-radius: 48px;
+      background: rgba(255, 255, 255, 0.74);
+      box-shadow: inset 0 -14px 28px rgba(77, 67, 177, 0.18);
+    }
+
+    .owl-eye {
+      position: absolute;
+      top: 24px;
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 54% 48%, #111426 0 28%, #37e6ff 30% 51%, #ffffff 54% 56%, #242744 58%);
+      box-shadow: 0 0 18px rgba(55, 230, 255, 0.56);
+    }
+
+    .owl-eye.left {
+      left: 24px;
+    }
+
+    .owl-eye.right {
+      right: 24px;
+    }
+
+    .owl-beak {
+      position: absolute;
+      top: 68px;
+      left: 50%;
+      width: 24px;
+      height: 20px;
+      transform: translateX(-50%);
+      clip-path: polygon(50% 100%, 0 0, 100% 0);
+      background: linear-gradient(180deg, #ffd36b, #ff9c4a);
+    }
+
+    .headphone {
+      position: absolute;
+      top: 50px;
+      width: 46px;
+      height: 62px;
+      border-radius: 22px;
+      background: linear-gradient(145deg, #16172b, #30365f);
+      border: 3px solid rgba(55, 230, 255, 0.55);
+    }
+
+    .headphone.left {
+      left: 8px;
+    }
+
+    .headphone.right {
+      right: 8px;
+    }
+
+    .headband {
+      position: absolute;
+      left: 48px;
+      right: 48px;
+      top: 35px;
+      height: 60px;
+      border-top: 9px solid #222643;
+      border-radius: 90px 90px 0 0;
+    }
+
+    .wing {
+      position: absolute;
+      top: 128px;
+      width: 48px;
+      height: 82px;
+      border-radius: 50%;
+      background: linear-gradient(145deg, #7b7dff, #352b99);
+      opacity: 0.82;
+    }
+
+    .wing.left {
+      left: 20px;
+      transform: rotate(24deg);
+    }
+
+    .wing.right {
+      right: 20px;
+      transform: rotate(-24deg);
+    }
+
+    .owl-base {
+      position: absolute;
+      bottom: -18px;
+      left: 50%;
+      width: 164px;
+      height: 34px;
+      border-radius: 50%;
+      background: rgba(55, 230, 255, 0.20);
+      filter: blur(10px);
+      transform: translateX(-50%);
+    }
+
+    @keyframes float {
+      50% {
+        transform: translateY(-12px);
+      }
+    }
+
+    .value-list {
+      list-style: none;
+      padding: 0;
+      margin: 24px 0 0;
+      display: grid;
+      gap: 12px;
+    }
+
+    .value-list li {
+      min-height: 46px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 11px 13px;
+      border-radius: var(--radius);
+      background: rgba(255, 255, 255, 0.07);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #dfe5ff;
+    }
+
+    .value-list li::before {
+      content: "";
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--lime);
+      box-shadow: 0 0 16px rgba(154, 255, 114, 0.8);
+      flex: 0 0 auto;
+    }
+
+    .level-grid {
+      display: grid;
+      gap: 12px;
+      margin-top: 24px;
+    }
+
+    .level-card {
+      min-height: 96px;
+      text-align: left;
+      padding: 17px;
+      color: var(--text);
+      border-radius: var(--radius);
+      background: rgba(255, 255, 255, 0.07);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease, background 180ms ease;
+    }
+
+    .level-card span {
+      display: block;
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .level-card.selected {
+      border-color: rgba(55, 230, 255, 0.9);
+      box-shadow: 0 0 0 1px rgba(55, 230, 255, 0.28), 0 0 28px rgba(55, 230, 255, 0.26);
+      background: rgba(55, 230, 255, 0.11);
+    }
+
+    .permission-card {
+      padding: 18px;
+      margin-top: 18px;
+      display: grid;
+      grid-template-columns: 48px 1fr;
+      gap: 14px;
+      align-items: start;
+    }
+
+    .permission-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: var(--radius);
+      display: grid;
+      place-items: center;
+      background: rgba(55, 230, 255, 0.15);
+      color: var(--cyan);
+    }
+
+    .streak {
+      min-width: 82px;
+      height: 42px;
+      border-radius: var(--radius);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      background: rgba(255, 211, 107, 0.14);
+      border: 1px solid rgba(255, 211, 107, 0.34);
+      color: #fff0be;
+      font-weight: 800;
+    }
+
+    .topic-grid {
+      margin-top: 22px;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 13px;
+    }
+
+    .topic-card {
+      min-height: 166px;
+      border-radius: var(--radius);
+      position: relative;
+      overflow: hidden;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      color: var(--text);
+      text-align: left;
+      isolation: isolate;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      box-shadow: 0 16px 28px rgba(0, 0, 0, 0.22);
+    }
+
+    .topic-card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: -2;
+      background: var(--topic-bg);
+      transform: scale(1.02);
+      transition: transform 240ms ease;
+    }
+
+    .topic-card::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      background: linear-gradient(180deg, rgba(6, 7, 18, 0.04), rgba(6, 7, 18, 0.74));
+    }
+
+    .topic-card:hover::before {
+      transform: scale(1.08);
+    }
+
+    .topic-meta {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 11px;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      min-height: 25px;
+      padding: 4px 9px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      font-size: 12px;
+      color: #edf0ff;
+      backdrop-filter: blur(10px);
+    }
+
+    .bottom-nav {
+      margin-top: auto;
+      min-height: 76px;
+      border-radius: 20px 20px 0 0;
+      background: rgba(10, 12, 27, 0.86);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      overflow: hidden;
+    }
+
+    .nav-item {
+      color: var(--muted);
+      background: transparent;
+      display: grid;
+      place-items: center;
+      align-content: center;
+      gap: 4px;
+      font-size: 12px;
+    }
+
+    .nav-item.active-nav {
+      color: var(--cyan);
+    }
+
+    .hero {
+      height: 270px;
+      border-radius: 0 0 22px 22px;
+      margin: -20px -22px 22px;
+      padding: 24px 22px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      position: relative;
+      overflow: hidden;
+      background:
+        linear-gradient(180deg, transparent 20%, rgba(5, 6, 16, 0.82) 100%),
+        radial-gradient(circle at 28% 32%, #ffdc93 0 11%, transparent 12%),
+        radial-gradient(circle at 62% 34%, #8d5e3b 0 10%, transparent 11%),
+        linear-gradient(135deg, #31556b, #8d5e8f 46%, #23182f);
+    }
+
+    .hero::before {
+      content: "";
+      position: absolute;
+      width: 180px;
+      height: 120px;
+      right: -28px;
+      top: 58px;
+      border-radius: 20px;
+      background:
+        linear-gradient(90deg, rgba(255, 255, 255, 0.22), transparent 42%),
+        linear-gradient(135deg, rgba(255, 246, 211, 0.35), rgba(255, 255, 255, 0.02));
+      transform: rotate(-12deg);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+    }
+
+    .chips {
+      display: flex;
+      overflow-x: auto;
+      gap: 10px;
+      padding: 6px 0 2px;
+      scrollbar-width: none;
+    }
+
+    .chips::-webkit-scrollbar {
+      display: none;
+    }
+
+    .chip {
+      flex: 0 0 auto;
+      min-height: 38px;
+      border-radius: 999px;
+      padding: 8px 14px;
+      display: inline-flex;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.10);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      color: #e9edff;
+    }
+
+    .floating-cta {
+      position: absolute;
+      left: 22px;
+      right: 22px;
+      bottom: 24px;
+      animation: pulseButton 1.9s ease-in-out infinite;
+    }
+
+    @keyframes pulseButton {
+      50% {
+        box-shadow: 0 0 38px rgba(55, 230, 255, 0.50), 0 14px 28px rgba(0, 0, 0, 0.28);
+      }
+    }
+
+    .chat-stack {
+      display: grid;
+      gap: 14px;
+      margin-top: 24px;
+    }
+
+    .ai-row,
+    .user-row {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+    }
+
+    .user-row {
+      justify-content: flex-end;
+    }
+
+    .avatar {
+      width: 42px;
+      height: 42px;
+      border-radius: var(--radius);
+      flex: 0 0 auto;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(145deg, #37e6ff, #936dff);
+      box-shadow: 0 0 20px rgba(55, 230, 255, 0.35);
+      color: #09101b;
+      font-weight: 900;
+    }
+
+    .bubble {
+      max-width: 280px;
+      border-radius: var(--radius);
+      padding: 14px;
+      background: rgba(255, 255, 255, 0.10);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      line-height: 1.42;
+      color: #f1f4ff;
+    }
+
+    .user-bubble {
+      background: rgba(55, 230, 255, 0.16);
+      border-color: rgba(55, 230, 255, 0.30);
+    }
+
+    .user-area {
+      margin: auto -22px -24px;
+      min-height: 420px;
+      padding: 28px 22px 26px;
+      border-radius: 28px 28px 0 0;
+      background:
+        radial-gradient(circle at 50% 28%, rgba(55, 230, 255, 0.20), transparent 38%),
+        rgba(255, 255, 255, 0.06);
+      border-top: 1px solid rgba(255, 255, 255, 0.14);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 18px;
+    }
+
+    .live-transcript {
+      min-height: 56px;
+      width: 100%;
+      text-align: center;
+      color: rgba(247, 248, 255, 0.72);
+      font-size: 20px;
+      line-height: 1.35;
+    }
+
+    .mic-stage {
+      height: 210px;
+      width: 100%;
+      position: relative;
+      display: grid;
+      place-items: center;
+    }
+
+    .sound-ring {
+      position: absolute;
+      width: 104px;
+      height: 104px;
+      border-radius: 50%;
+      border: 1px solid rgba(55, 230, 255, 0.42);
+      animation: ring 2s ease-out infinite;
+    }
+
+    .sound-ring:nth-child(2) {
+      animation-delay: 0.42s;
+    }
+
+    .sound-ring:nth-child(3) {
+      animation-delay: 0.84s;
+    }
+
+    @keyframes ring {
+      from {
+        transform: scale(0.7);
+        opacity: 0.85;
+      }
+      to {
+        transform: scale(2.1);
+        opacity: 0;
+      }
+    }
+
+    .mic-button {
+      width: 104px;
+      height: 104px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(145deg, #37e6ff, #936dff);
+      color: #08101c;
+      box-shadow: 0 0 36px rgba(55, 230, 255, 0.54), inset 0 0 18px rgba(255, 255, 255, 0.28);
+      z-index: 2;
+    }
+
+    .visualizer {
+      display: flex;
+      gap: 5px;
+      align-items: center;
+      height: 54px;
+    }
+
+    .visualizer span {
+      width: 6px;
+      border-radius: 999px;
+      background: linear-gradient(180deg, var(--cyan), var(--violet));
+      animation: wave 740ms ease-in-out infinite alternate;
+    }
+
+    .visualizer span:nth-child(2n) {
+      animation-delay: 110ms;
+    }
+
+    .visualizer span:nth-child(3n) {
+      animation-delay: 220ms;
+    }
+
+    @keyframes wave {
+      from {
+        height: 14px;
+      }
+      to {
+        height: 52px;
+      }
+    }
+
+    .spinner {
+      width: 86px;
+      height: 86px;
+      border-radius: 50%;
+      border: 5px solid rgba(255, 255, 255, 0.12);
+      border-top-color: var(--cyan);
+      animation: spin 1s linear infinite;
+      box-shadow: 0 0 28px rgba(55, 230, 255, 0.26);
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .thinking {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      color: var(--muted);
+      margin-top: 8px;
+      font-size: 12px;
+    }
+
+    .thinking i {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--cyan);
+      animation: dotPulse 900ms ease-in-out infinite;
+    }
+
+    .thinking i:nth-child(2) {
+      animation-delay: 140ms;
+    }
+
+    .thinking i:nth-child(3) {
+      animation-delay: 280ms;
+    }
+
+    @keyframes dotPulse {
+      50% {
+        transform: translateY(-4px);
+        opacity: 0.35;
+      }
+    }
+
+    .hint-panel {
+      margin-top: auto;
+      padding: 18px;
+      transform: translateY(0);
+      animation: slideUp 420ms ease both;
+    }
+
+    @keyframes slideUp {
+      from {
+        transform: translateY(60px);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    .hint-option {
+      margin-top: 11px;
+      padding: 12px;
+      border-radius: var(--radius);
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px dashed rgba(255, 255, 255, 0.20);
+      color: #e7ecff;
+    }
+
+    .compact-mic {
+      margin: 16px auto 0;
+      width: 76px;
+      height: 76px;
+    }
+
+    .edit-wrap {
+      margin-top: 26px;
+      position: relative;
+    }
+
+    .tooltip {
+      display: inline-flex;
+      min-height: 30px;
+      align-items: center;
+      padding: 5px 10px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.92);
+      color: #15172a;
+      font-size: 12px;
+      margin-bottom: 10px;
+    }
+
+    .bad-word {
+      color: var(--rose);
+      text-decoration-line: underline;
+      text-decoration-style: wavy;
+      text-decoration-color: var(--rose);
+      text-underline-offset: 4px;
+    }
+
+    .transcript-input {
+      width: 100%;
+      min-height: 92px;
+      border-radius: var(--radius);
+      border: 1px solid rgba(55, 230, 255, 0.40);
+      background: rgba(55, 230, 255, 0.12);
+      color: var(--text);
+      padding: 15px;
+      outline: none;
+      box-shadow: 0 0 22px rgba(55, 230, 255, 0.18);
+    }
+
+    .inline-keyboard {
+      margin-top: 14px;
+      display: grid;
+      grid-template-columns: repeat(10, 1fr);
+      gap: 5px;
+    }
+
+    .key {
+      min-height: 32px;
+      border-radius: 6px;
+      display: grid;
+      place-items: center;
+      background: rgba(255, 255, 255, 0.13);
+      color: rgba(247, 248, 255, 0.72);
+      font-size: 12px;
+    }
+
+    .score-ring {
+      width: 198px;
+      height: 198px;
+      margin: 26px auto 20px;
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at center, #12142b 0 57%, transparent 58%),
+        conic-gradient(var(--lime) 0 85%, rgba(255, 255, 255, 0.13) 85% 100%);
+      display: grid;
+      place-items: center;
+      box-shadow: 0 0 42px rgba(154, 255, 114, 0.18);
+    }
+
+    .score-ring strong {
+      display: block;
+      font-size: 42px;
+      line-height: 1;
+    }
+
+    .score-ring span {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 9px;
+      margin-top: 12px;
+    }
+
+    .metric-card {
+      min-height: 112px;
+      padding: 12px 10px;
+      border-radius: var(--radius);
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .metric-card strong {
+      font-size: 22px;
+      display: block;
+      margin-top: 8px;
+    }
+
+    .sparkline {
+      width: 100%;
+      height: 26px;
+      margin-top: 10px;
+    }
+
+    .error-card {
+      margin-top: 24px;
+      padding: 18px;
+    }
+
+    .sentence {
+      font-size: 22px;
+      line-height: 1.38;
+      color: #f3f6ff;
+    }
+
+    .correction {
+      margin-top: 14px;
+      font-size: 19px;
+      color: #dafbd1;
+    }
+
+    .why-box {
+      margin-top: 18px;
+      padding: 15px;
+      border-radius: var(--radius);
+      background: rgba(154, 255, 114, 0.10);
+      border: 1px solid rgba(154, 255, 114, 0.20);
+    }
+
+    .play-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 13px;
+    }
+
+    .feedback-area {
+      margin-top: 18px;
+      padding: 16px;
+      border-radius: var(--radius);
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.13);
+    }
+
+    .feedback-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .neutralized .bad-word {
+      color: #d7dbef;
+      text-decoration-color: rgba(215, 219, 239, 0.38);
+    }
+
+    .toast {
+      min-height: 50px;
+      margin-top: 12px;
+      padding: 13px;
+      border-radius: var(--radius);
+      background: rgba(154, 255, 114, 0.12);
+      border: 1px solid rgba(154, 255, 114, 0.30);
+      color: #eaffdf;
+      display: none;
+      align-items: center;
+    }
+
+    .toast.show {
+      display: flex;
+      animation: screenIn 260ms ease both;
+    }
+
+    .lab-nav {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .lab-card {
+      padding: 14px;
+      border-radius: var(--radius);
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.13);
+    }
+
+    .lab-card h3,
+    .rationale-card h3 {
+      margin-bottom: 7px;
+    }
+
+    .lab-list {
+      display: grid;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .flow-step {
+      display: grid;
+      grid-template-columns: 46px minmax(0, 1fr);
+      gap: 12px;
+      align-items: start;
+      padding: 12px;
+      border-radius: var(--radius);
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      position: relative;
+    }
+
+    .flow-step::after {
+      content: "";
+      position: absolute;
+      left: 35px;
+      bottom: -12px;
+      width: 2px;
+      height: 12px;
+      background: rgba(55, 230, 255, 0.45);
+    }
+
+    .flow-step:last-child::after {
+      display: none;
+    }
+
+    .flow-step strong:first-child {
+      width: 42px;
+      height: 42px;
+      border-radius: var(--radius);
+      display: grid;
+      place-items: center;
+      background: rgba(55, 230, 255, 0.14);
+      color: var(--cyan);
+      border: 1px solid rgba(55, 230, 255, 0.28);
+    }
+
+    .rationale-strip {
+      margin-top: 14px;
+      padding: 12px;
+      border-radius: var(--radius);
+      border: 1px solid rgba(255, 211, 107, 0.24);
+      background: rgba(255, 211, 107, 0.08);
+      color: #fff1c7;
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .rationale-grid,
+    .matrix-grid,
+    .agency-grid {
+      display: grid;
+      gap: 11px;
+      margin-top: 16px;
+    }
+
+    .rationale-card {
+      padding: 14px;
+      border-radius: var(--radius);
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.13);
+    }
+
+    .agency-card {
+      padding: 14px;
+      border-radius: var(--radius);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .agency-card.act {
+      border-color: rgba(154, 255, 114, 0.35);
+      background: rgba(154, 255, 114, 0.09);
+    }
+
+    .agency-card.ask {
+      border-color: rgba(255, 211, 107, 0.35);
+      background: rgba(255, 211, 107, 0.09);
+    }
+
+    .agency-card.dont {
+      border-color: rgba(255, 111, 159, 0.35);
+      background: rgba(255, 111, 159, 0.09);
+    }
+
+    .mini-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+      overflow: hidden;
+      border-radius: var(--radius);
+      font-size: 12px;
+    }
+
+    .mini-table th,
+    .mini-table td {
+      padding: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      text-align: left;
+      vertical-align: top;
+      color: #dfe5ff;
+    }
+
+    .mini-table th {
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .option-list {
+      display: grid;
+      gap: 10px;
+      margin-top: 15px;
+    }
+
+    .option-card {
+      text-align: left;
+      min-height: 74px;
+      padding: 14px;
+      border-radius: var(--radius);
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .option-card.selected-option {
+      border-color: rgba(55, 230, 255, 0.7);
+      box-shadow: 0 0 24px rgba(55, 230, 255, 0.18);
+    }
+
+    .confidence-meter {
+      height: 12px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.13);
+      overflow: hidden;
+      margin: 12px 0;
+    }
+
+    .confidence-meter span {
+      display: block;
+      height: 100%;
+      width: 62%;
+      background: linear-gradient(90deg, var(--rose), var(--amber));
+    }
+
+    .demo-list {
+      display: grid;
+      gap: 9px;
+      margin-top: 16px;
+    }
+
+    .demo-item {
+      display: grid;
+      grid-template-columns: 56px minmax(0, 1fr);
+      gap: 9px;
+      align-items: center;
+      padding: 10px;
+      border-radius: var(--radius);
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .demo-item span:first-child {
+      color: var(--cyan);
+      font-weight: 800;
+      font-size: 12px;
+    }
+
+    .demo-item .pill-btn {
+      grid-column: 1 / -1;
+      min-height: 34px;
+      width: 100%;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    svg {
+      width: 22px;
+      height: 22px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .fill-icon {
+      fill: currentColor;
+      stroke: none;
+    }
+
+    .prototype-layout {
+      width: min(100%, 1440px);
+      height: calc(100vh - 48px);
+      display: grid;
+      grid-template-columns: minmax(340px, 390px) minmax(420px, 1fr);
+      gap: 24px;
+      align-items: start;
+      overflow: hidden;
+    }
+
+    .day20-panel {
+      height: calc(100vh - 48px);
+      overflow-y: auto;
+      padding: 24px;
+      border-radius: 18px;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.05)),
+        rgba(8, 9, 20, 0.76);
+      border: 1px solid var(--stroke);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(22px);
+    }
+
+    .day20-panel h2 {
+      font-size: 28px;
+    }
+
+    .day20-panel h3 {
+      margin-top: 20px;
+      color: var(--text);
+    }
+
+    .day20-panel p,
+    .day20-panel li,
+    .day20-panel td {
+      font-size: 14px;
+    }
+
+    .day20-panel ul {
+      padding-left: 20px;
+      margin: 10px 0 0;
+    }
+
+    .day20-panel table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+      font-size: 13px;
+      overflow: hidden;
+      border-radius: var(--radius);
+    }
+
+    .day20-panel th,
+    .day20-panel td {
+      vertical-align: top;
+      text-align: left;
+      padding: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #dfe5ff;
+    }
+
+    .day20-panel th {
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.09);
+    }
+
+    .day20-toc {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin: 18px 0 22px;
+    }
+
+    .toc-pill {
+      min-height: 34px;
+      border-radius: 999px;
+      padding: 8px 11px;
+      color: #e8ebff;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      text-decoration: none;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .day20-section {
+      padding: 18px;
+      margin-top: 14px;
+      border-radius: var(--radius);
+      background: rgba(255, 255, 255, 0.07);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .day20-section > h3 {
+      margin-top: 0;
+      color: var(--cyan);
+    }
+
+    .day20-note {
+      margin-top: 12px;
+      padding: 12px;
+      border-radius: var(--radius);
+      border: 1px solid rgba(154, 255, 114, 0.28);
+      background: rgba(154, 255, 114, 0.10);
+      color: #eaffdf;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .day20-grid {
+      display: grid;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .day20-mini-card {
+      padding: 13px;
+      border-radius: var(--radius);
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      min-width: 0;
+    }
+
+    .day20-mini-card strong {
+      color: var(--text);
+      display: block;
+      margin-bottom: 5px;
+    }
+
+    .day20-flow {
+      display: grid;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .day20-flow span {
+      padding: 10px 12px;
+      border-radius: var(--radius);
+      background: rgba(55, 230, 255, 0.10);
+      border: 1px solid rgba(55, 230, 255, 0.22);
+      color: #eafcff;
+      font-size: 13px;
+    }
+
+    .phone-kpi {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .phone-kpi div {
+      padding: 13px;
+      border-radius: var(--radius);
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .phone-kpi strong {
+      color: var(--cyan);
+      display: block;
+      font-size: 20px;
+      margin-bottom: 4px;
+    }
+
+    @media (max-width: 1080px) {
+      body {
+        align-items: start;
+        overflow: auto;
+      }
+
+      .prototype-layout {
+        grid-template-columns: 1fr;
+        height: auto;
+        overflow: visible;
+      }
+
+      .app-shell {
+        justify-self: center;
+      }
+
+      .day20-panel {
+        height: auto;
+      }
+    }
+
+    @media (max-width: 520px) {
+      body {
+        padding: 0;
+        background: #080914;
+      }
+
+      .prototype-layout {
+        display: block;
+      }
+
+      .day20-panel {
+        border-radius: 0;
+        height: auto;
+      }
+
+      .app-shell {
+        width: 100%;
+        height: 100vh;
+        min-height: 100vh;
+        border-radius: 0;
+        border: 0;
+      }
+
+      .screen {
+        height: calc(100vh - 34px);
+        min-height: calc(100vh - 34px);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="prototype-layout">
+  <main class="app-shell" aria-live="polite">
+    <div class="status-bar">
+      <span>9:41</span>
+      <span class="camera-pill" aria-hidden="true"></span>
+      <span>5G 100%</span>
+    </div>
+
+    <section class="screen active" data-screen="welcome">
+      <div class="welcome-art" aria-label="Friendly robotic owl wearing headphones">
+        <div class="owl">
+          <span class="owl-base"></span>
+          <span class="headband"></span>
+          <span class="headphone left"></span>
+          <span class="headphone right"></span>
+          <span class="owl-ear left"></span>
+          <span class="owl-ear right"></span>
+          <span class="owl-body"></span>
+          <span class="wing left"></span>
+          <span class="wing right"></span>
+          <span class="owl-face">
+            <span class="owl-eye left"></span>
+            <span class="owl-eye right"></span>
+            <span class="owl-beak"></span>
+          </span>
+        </div>
+      </div>
+      <h1>TurTalk: luyện nói mỗi ngày</h1>
+      <ul class="value-list">
+        <li>Speaking session ngắn cho học sinh lớp 6-9</li>
+        <li>Feedback nhanh, XP, mission và streak</li>
+        <li>Continue learning đưa user quay lại bài đang học</li>
+      </ul>
+      <div class="rationale-strip">
+        Product promise: “Nói một chút mỗi ngày, nhận feedback ngay, thấy mình tiến bộ.”
+      </div>
+      <div class="footer-actions">
+        <button class="primary-btn" data-go="d20start">Bắt đầu</button>
+        <button class="ghost-btn" data-go="day20menu">Mở phân tích Day 20</button>
+        <button class="ghost-btn" data-go="labmap">Lab Day 18</button>
+        <div class="progress-dots" data-dots></div>
+      </div>
+    </section>
+
+    <section class="screen" data-screen="d20start">
+      <div class="top-row">
+        <button class="back-btn" data-go="welcome" aria-label="Back">
+          <svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"></path></svg>
+        </button>
+        <span class="subtle">Day 20 - Onboarding đã thiết kế lại</span>
+      </div>
+      <h2 style="margin-top:18px">Hôm nay luyện nói 1 bài ngắn để giữ streak.</h2>
+      <p style="margin-top:8px">Màn Day 20 đưa học sinh thẳng tới Trail hiện tại, thấy lesson đang học, mission hôm nay và CTA Continue learning rõ ràng.</p>
+      <div class="phone-kpi">
+        <div><strong>12</strong><p>XP hôm nay</p></div>
+        <div><strong>3</strong><p>Ngày streak</p></div>
+        <div><strong>1/2</strong><p>Daily mission</p></div>
+        <div><strong>D7</strong><p>Retention check</p></div>
+      </div>
+      <div class="day20-note">Cập nhật Day 20: dashboard không chỉ giới thiệu app, mà kéo user quay lại core action: mở lesson hiện tại và bắt đầu speaking session.</div>
+      <div class="footer-actions">
+        <button class="primary-btn" data-go="d20level">Continue learning</button>
+        <button class="ghost-btn" data-go="labmap">Xem Current State Day 18</button>
+      </div>
+    </section>
+
+    <section class="screen" data-screen="d20level">
+      <div class="top-row">
+        <button class="back-btn" data-go="d20start" aria-label="Back">
+          <svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"></path></svg>
+        </button>
+        <span class="subtle">Grade + placement</span>
+      </div>
+      <h2 style="margin-top:18px">Giữ setup tối thiểu để cá nhân hóa bài nói.</h2>
+      <p style="margin-top:8px">Theo slide, Day 20 giữ Grade và Placement vì chúng giúp chọn Trail phù hợp; các profile fields phụ được delay sau first value.</p>
+      <div class="level-grid">
+        <button class="level-card" data-level>
+          Lớp 6
+          <span>Câu ngắn, topic quen thuộc, feedback nhẹ nhàng.</span>
+        </button>
+        <button class="level-card selected" data-level>
+          Lớp 7
+          <span>Trail đang học: Daily English A2.</span>
+        </button>
+        <button class="level-card" data-level>
+          Lớp 8-9
+          <span>Role-play dài hơn, yêu cầu phản xạ nhanh hơn.</span>
+        </button>
+      </div>
+      <div class="review-card">
+        <h3>Placement hiện tại</h3>
+        <p>A2 Starter - đủ để luyện hội thoại ngắn, nhận feedback phát âm/ngữ pháp và tích XP.</p>
+      </div>
+      <div class="footer-actions">
+        <button class="primary-btn" data-go="d20scenario">Mở Trail hôm nay</button>
+      </div>
+    </section>
+
+    <section class="screen" data-screen="d20scenario">
+      <div class="top-row">
+        <button class="back-btn" data-go="d20level" aria-label="Back">
+          <svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"></path></svg>
+        </button>
+        <span class="subtle">Trail / Lesson detail</span>
+      </div>
+      <h2 style="margin-top:18px">Unit 3 - Ordering at the canteen</h2>
+      <p style="margin-top:8px">Lesson detail cho user biết mình sắp luyện gì, nhận bao nhiêu XP và mission nào sẽ được cập nhật sau khi nói xong.</p>
+      <button class="topic-card" data-go="d20mic" style="--topic-bg: radial-gradient(circle at 25% 22%, #ffe1a8 0 10%, transparent 11%), radial-gradient(circle at 72% 28%, #6f3c1f 0 12%, transparent 13%), linear-gradient(135deg, #315f73, #a35a88); margin-top:18px;">
+        <div class="topic-meta">
+          <span class="badge">3 phút</span>
+          <span class="badge">+10 XP</span>
+          <span class="badge">Mission 2/2</span>
+        </div>
+        <h3>Speaking: Ask for food politely</h3>
+        <p>Luyện nói một câu gọi món, nghe phản hồi, sửa một lỗi cụ thể và hoàn thành daily mission.</p>
+      </button>
+      <div class="day20-note">Core action: học sinh hoàn thành speaking session có feedback. Mở lesson chỉ là bước dẫn, chưa được tính active.</div>
+    </section>
+
+    <section class="screen" data-screen="d20mic">
+      <div class="top-row">
+        <button class="back-btn" data-go="d20scenario" aria-label="Back">
+          <svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"></path></svg>
+        </button>
+        <span class="subtle">Start speaking</span>
+      </div>
+      <h2 style="margin-top:18px">Bắt đầu speaking session để nhận feedback và XP.</h2>
+      <div class="permission-card glass-card">
+        <div class="permission-icon">
+          <svg viewBox="0 0 24 24"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><path d="M12 19v3"></path></svg>
+        </div>
+        <div>
+          <h3>Mic chỉ dùng trong phiên này</h3>
+          <p style="margin-top:6px">Permission xuất hiện đúng lúc user chuẩn bị nói. Điều này giảm friction trước first value nhưng vẫn minh bạch về dữ liệu âm thanh.</p>
+        </div>
+      </div>
+      <div class="rationale-strip">Daily mission chưa hoàn thành sẽ không chặn user. CTA chính vẫn là Start speaking để quay lại hành động tạo value.</div>
+      <div class="footer-actions">
+        <button class="primary-btn" data-go="d20speak">Start speaking</button>
+      </div>
+    </section>
+
+    <section class="screen" data-screen="d20speak">
+      <div class="top-row">
+        <button class="back-btn" data-go="d20mic" aria-label="Back">
+          <svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"></path></svg>
+        </button>
+        <span class="subtle">Speaking session</span>
+      </div>
+      <div class="chat-stack">
+        <div class="ai-row">
+          <div class="avatar">AI</div>
+          <div class="bubble">What would you like for lunch today?</div>
+        </div>
+      </div>
+      <div class="user-area">
+        <p class="subtle">Học sinh đang nói:</p>
+        <div class="live-transcript">I would like a sandwich and orange juice, please.</div>
+        <div class="mic-stage">
+          <span class="sound-ring"></span>
+          <span class="sound-ring"></span>
+          <span class="sound-ring"></span>
+          <button class="mic-button" data-go="d20instant" aria-label="Finish speaking">
+            <svg viewBox="0 0 24 24"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path></svg>
+          </button>
+        </div>
+        <p>Giữ mic, nói một câu thật, rồi thả ra để nộp speaking session và nhận feedback.</p>
+      </div>
+    </section>
+
+    <section class="screen" data-screen="d20instant">
+      <div class="top-row">
+        <button class="back-btn" data-go="d20speak" aria-label="Back">
+          <svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"></path></svg>
+        </button>
+        <span class="subtle">Feedback + XP</span>
+      </div>
+      <h2 style="margin-top:18px">Session hoàn thành. Bạn nhận feedback và +10 XP.</h2>
+      <div class="score-card glass-card">
+        <div>
+          <p class="subtle">Speaking score</p>
+          <strong>88</strong>
+        </div>
+        <div class="score-ring">+10</div>
+      </div>
+      <div class="review-card">
+        <h3>Feedback nhanh</h3>
+        <p>Câu của bạn rõ nghĩa. Hãy thêm âm cuối trong <strong>juice</strong> để câu nghe tự nhiên hơn.</p>
+        <button class="pill-btn" data-go="review">Xem bằng chứng</button>
+      </div>
+      <div class="review-card">
+        <h3>Mission progress</h3>
+        <p>Daily Speaking Mission: 2/2 completed. Reward đã sẵn sàng để claim.</p>
+      </div>
+      <div class="footer-actions">
+        <button class="primary-btn" data-go="d20aha">Claim reward</button>
+      </div>
+    </section>
+
+    <section class="screen" data-screen="d20aha">
+      <div class="top-row">
+        <button class="back-btn" data-go="d20instant" aria-label="Back">
+          <svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"></path></svg>
+        </button>
+        <span class="subtle">Reward + retention loop</span>
+      </div>
+      <h2 style="margin-top:18px">Reward đã claim. Lý do quay lại ngày mai đã rõ.</h2>
+      <div class="day20-grid">
+        <div class="day20-mini-card"><strong>Daily mission</strong><p>Hoàn thành 2/2 nhiệm vụ và nhận reward mà không bị kẹt ở trạng thái lỗi.</p></div>
+        <div class="day20-mini-card"><strong>Progress</strong><p>+10 XP, level progress tăng và streak 3 ngày được giữ.</p></div>
+        <div class="day20-mini-card"><strong>Next trigger</strong><p>Ngày mai app có thể nhắc “luyện lại âm cuối trong juice” hoặc mở lesson tiếp theo.</p></div>
+      </div>
+      <div class="footer-actions">
+        <button class="primary-btn" data-go="d20scenario">Continue learning</button>
+        <button class="ghost-btn" data-go="d20before">Xem Before / After</button>
+      </div>
+    </section>
+
+    <section class="screen" data-screen="setup">
+      <div class="top-row">
+        <button class="back-btn" data-go="welcome" aria-label="Back">
+          <svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"></path></svg>
+        </button>
+        <span class="subtle">Thiet lap ca nhan</span>
+      </div>
+      <h2 style="margin-top:24px">Ca nhan hoa trai nghiem cua ban.</h2>
+      <p style="margin-top:10px">Chon trinh do gan nhat voi ban hom nay.</p>
+      <div class="level-grid">
+        <button class="level-card selected" data-level="Moi bat dau">
+          <strong>Moi bat dau</strong>
+          <span>Cum ngan, nhip cham, co them vi du.</span>
+        </button>
+        <button class="level-card" data-level="Trung cap">
+          <strong>Trung cap</strong>
+          <span>Prompt tu nhien kem gop y sua loi huu ich.</span>
+        </button>
+        <button class="level-card" data-level="Nang cao">
+          <strong>Nang cao</strong>
+          <span>Toc do gan nguoi ban xu, co sac thai va feedback chi tiet hon.</span>
+        </button>
+      </div>
+      <div class="permission-card glass-card">
+        <span class="permission-icon">
+          <svg viewBox="0 0 24 24"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><path d="M12 19v3"></path></svg>
+        </span>
+        <div>
+          <h3>Quyen truy cap microphone</h3>
+          <p style="margin-top:6px">AI can nghe giong noi de phan hoi phat am. AI CHI nghe khi ban giu nut mic.</p>
+        </div>
+      </div>
+      <div class="rationale-strip">
+        User control: bo qua thiet lap chu de, doi trinh do sau, xoa ban ghi sau phien hoc va tat quyen mic bat cu luc nao.
+      </div>
+      <div class="footer-actions">
+        <button class="primary-btn" id="enableMic">Bat mic va tiep tuc</button>
+        <div class="progress-dots" data-dots></div>
+      </div>
+    </section>
+
+    <section class="screen" data-screen="home">
+      <div class="top-row">
+        <div>
+          <p class="subtle">Trang chu</p>
+          <h2>San sang luyen noi chua, Alex?</h2>
+        </div>
+        <div class="streak"><span>7</span><span>day</span></div>
+      </div>
+      <div class="topic-grid">
+        <button class="topic-card" data-go="prep" style="--topic-bg: radial-gradient(circle at 25% 22%, #ffe1a8 0 10%, transparent 11%), radial-gradient(circle at 72% 28%, #6f3c1f 0 12%, transparent 13%), linear-gradient(135deg, #315f73, #a35a88);">
+          <div class="topic-meta"><span class="badge">Trung cap</span><span class="badge">5 mins</span></div>
+          <h3>Hoi thoai quan ca phe</h3>
+        </button>
+        <button class="topic-card" data-go="prep" style="--topic-bg: radial-gradient(circle at 72% 28%, #f8f8ff 0 10%, transparent 11%), linear-gradient(135deg, #243456, #6c78c9 52%, #2b1834);">
+          <div class="topic-meta"><span class="badge">Nang cao</span><span class="badge">8 mins</span></div>
+          <h3>Phong van viec lam</h3>
+        </button>
+        <button class="topic-card" data-go="prep" style="--topic-bg: radial-gradient(circle at 28% 25%, #76e1ff 0 11%, transparent 12%), linear-gradient(135deg, #135e78, #4a8893 50%, #473566);">
+          <div class="topic-meta"><span class="badge">Moi bat dau</span><span class="badge">6 mins</span></div>
+          <h3>Van de khi du lich</h3>
+        </button>
+      </div>
+      <div class="rationale-strip">
+        Multiple topics are valid. The app shows alternatives instead of implying one AI-selected path is objectively best.
+      </div>
+      <nav class="bottom-nav" aria-label="Main navigation">
+        <button class="nav-item active-nav">
+          <svg viewBox="0 0 24 24"><path d="m3 10 9-7 9 7"></path><path d="M5 10v10h14V10"></path></svg>
+          <span>Trang chu</span>
+        </button>
+        <button class="nav-item" data-go="summary">
+          <svg viewBox="0 0 24 24"><path d="M4 19V5"></path><path d="M4 19h16"></path><path d="M8 16V9"></path><path d="M13 16V7"></path><path d="M18 16v-4"></path></svg>
+          <span>Tien do</span>
+        </button>
+        <button class="nav-item" data-go="labmap">
+          <svg viewBox="0 0 24 24"><path d="M12 15.5A3.5 3.5 0 1 0 12 8a3.5 3.5 0 0 0 0 7.5Z"></path><path d="M19.4 15a1.8 1.8 0 0 0 .36 1.98l.05.05a2 2 0 0 1-2.83 2.83l-.05-.05A1.8 1.8 0 0 0 15 19.4a1.8 1.8 0 0 0-1 .6 1.8 1.8 0 0 0-.44 1.1V21a2 2 0 0 1-4 0v-.1A1.8 1.8 0 0 0 8 19.4a1.8 1.8 0 0 0-1.98.36l-.05.05a2 2 0 1 1-2.83-2.83l.05-.05A1.8 1.8 0 0 0 4.6 15a1.8 1.8 0 0 0-.6-1 1.8 1.8 0 0 0-1.1-.44H3a2 2 0 0 1 0-4h.1A1.8 1.8 0 0 0 4.6 8a1.8 1.8 0 0 0-.36-1.98l-.05-.05a2 2 0 1 1 2.83-2.83l.05.05A1.8 1.8 0 0 0 9 4.6a1.8 1.8 0 0 0 1-.6 1.8 1.8 0 0 0 .44-1.1V3a2 2 0 1 1 4 0v.1A1.8 1.8 0 0 0 16 4.6a1.8 1.8 0 0 0 1.98-.36l.05-.05a2 2 0 1 1 2.83 2.83l-.05.05A1.8 1.8 0 0 0 19.4 9c.15.38.37.72.6 1 .34.33.71.49 1.1.49h.1a2 2 0 1 1 0 4h-.1c-.39 0-.76.16-1.1.49-.23.28-.45.62-.6 1.01Z"></path></svg>
+          <span>Lab</span>
+        </button>
+      </nav>
+    </section>
+
+    <section class="screen" data-screen="prep">
+      <div class="hero">
+        <button class="back-btn" data-go="home" aria-label="Back" style="position:absolute;top:18px;left:18px">
+          <svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"></path></svg>
+        </button>
+        <span class="badge" style="width:max-content;margin-bottom:10px">Coffee Shop</span>
+        <h2>Goi do o quan ca phe</h2>
+      </div>
+      <div class="glass-card" style="padding:16px">
+        <h3>Muc tieu</h3>
+        <p style="margin-top:6px">Goi do uong va tuy chinh sua/duong theo y muon.</p>
+      </div>
+      <h3 style="margin-top:22px">Tu vung goi y</h3>
+      <div class="chips" aria-label="Suggested vocabulary">
+        <span class="chip">Decaf</span>
+        <span class="chip">Oat milk</span>
+        <span class="chip">For here</span>
+        <span class="chip">To go</span>
+        <span class="chip">Extra shot</span>
+        <span class="chip">No sugar</span>
+      </div>
+      <div class="rationale-strip">
+        System feedback: cac chip tu vung cho user biet AI co the ho tro ngu canh nao, nhung user van tu chon dieu muon noi.
+      </div>
+      <button class="primary-btn floating-cta" data-go="listening">Bat dau hoi thoai</button>
+    </section>
+
+    <section class="screen" data-screen="listening">
+      <div class="top-row">
+        <button class="back-btn" data-go="prep" aria-label="Back">
+          <svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"></path></svg>
+        </button>
+        <span class="subtle">Phien luyen noi</span>
+      </div>
+      <div class="chat-stack">
+        <div class="ai-row">
+          <span class="avatar">AI</span>
+          <div class="bubble">Welcome to Star Beans! What can I get for you today?</div>
+        </div>
+      </div>
+      <div class="rationale-strip">
+        System feedback ngam: song am va transcript mo cho thay AI chi dang nghe o thoi diem nay va noi dung van tam thoi.
+      </div>
+      <div class="user-area">
+        <div class="live-transcript" id="liveTranscript">I would like a large cappuccino with...</div>
+        <div class="mic-stage">
+          <span class="sound-ring"></span>
+          <span class="sound-ring"></span>
+          <span class="sound-ring"></span>
+          <button class="mic-button" data-go="analyzing" aria-label="Finish speaking">
+            <svg viewBox="0 0 24 24" style="width:42px;height:42px"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><path d="M12 19v3"></path></svg>
+          </button>
+        </div>
+        <div class="visualizer" aria-hidden="true">
+          <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+        </div>
+      </div>
+    </section>
+
+    <section class="screen" data-screen="analyzing">
+      <div class="top-row">
+        <button class="back-btn" data-go="listening" aria-label="Back">
+          <svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"></path></svg>
+        </button>
+        <span class="subtle">Đang phân tích</span>
+      </div>
+      <div class="chat-stack">
+        <div class="ai-row">
+          <span class="avatar">AI</span>
+          <div>
+            <div class="bubble">Welcome to Star Beans! What can I get for you today?</div>
+            <div class="thinking">Đang kiểm tra ngữ pháp... <i></i><i></i><i></i></div>
+          </div>
+        </div>
+        <div class="user-row">
+          <div class="bubble user-bubble">I would like a large cappuccino with oat milk, please.</div>
+        </div>
+      </div>
+      <div class="rationale-strip">
+        System feedback rõ ràng: app nói đang kiểm tra gì trước khi trả điểm, để user biết AI chưa chốt feedback.
+      </div>
+      <div class="user-area" style="justify-content:center">
+        <div class="spinner" aria-label="Đang phân tích"></div>
+        <h2>Đang phân tích...</h2>
+        <p>Đang kiểm tra ngữ pháp, phat am va do luu loat.</p>
+      </div>
+      <div class="footer-actions" style="position:absolute;left:22px;right:22px;bottom:24px">
+        <button class="primary-btn" data-go="hint">Tiep tuc</button>
+      </div>
+    </section>
+
+    <section class="screen" data-screen="hint">
+      <div class="top-row">
+        <button class="back-btn" data-go="analyzing" aria-label="Back">
+          <svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"></path></svg>
+        </button>
+        <span class="subtle">Hoi thoai</span>
+      </div>
+      <div class="chat-stack">
+        <div class="ai-row">
+          <span class="avatar">AI</span>
+          <div class="bubble">Would you like anything to eat with that?</div>
+        </div>
+      </div>
+      <div class="hint-panel glass-card">
+        <h3>Can tro giup - Thu noi:</h3>
+        <div class="hint-option">1. No thanks, just the ___.</div>
+        <div class="hint-option">2. Yes, I'll take a ___.</div>
+        <div class="rationale-strip">
+          Silence is ambiguous, so AI offers scaffolding instead of answering for the learner.
+        </div>
+        <button class="mic-button compact-mic" data-go="edit" aria-label="Speak with hint">
+          <svg viewBox="0 0 24 24" style="width:34px;height:34px"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><path d="M12 19v3"></path></svg>
+        </button>
+      </div>
+    </section>
+
+    <section class="screen" data-screen="edit">
+      <div class="top-row">
+        <button class="back-btn" data-go="hint" aria-label="Back">
+          <svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"></path></svg>
+        </button>
+        <span class="subtle">Sua transcript</span>
+      </div>
+      <div class="chat-stack">
+        <div class="user-row">
+          <div class="bubble user-bubble">I would like a large <span class="bad-word">cat-puccino</span></div>
+        </div>
+      </div>
+      <div class="edit-wrap">
+        <span class="tooltip">Cham de sua tu nao AI nghe sai.</span>
+        <input class="transcript-input" id="transcriptInput" value="I would like a large cat-puccino" aria-label="Editable transcript">
+        <div style="display:flex;gap:9px;margin-top:10px">
+          <button class="pill-btn" id="confirmEdit" style="background:rgba(154,255,114,.16);border-color:rgba(154,255,114,.34)">Xac nhan sua</button>
+          <button class="pill-btn" id="undoEdit">Hoan tac</button>
+        </div>
+        <div class="inline-keyboard" aria-hidden="true">
+          <span class="key">Q</span><span class="key">W</span><span class="key">E</span><span class="key">R</span><span class="key">T</span><span class="key">Y</span><span class="key">U</span><span class="key">I</span><span class="key">O</span><span class="key">P</span>
+          <span class="key">A</span><span class="key">S</span><span class="key">D</span><span class="key">F</span><span class="key">G</span><span class="key">H</span><span class="key">J</span><span class="key">K</span><span class="key">L</span><span class="key">.</span>
+          <span class="key">Z</span><span class="key">X</span><span class="key">C</span><span class="key">V</span><span class="key">B</span><span class="key">N</span><span class="key">M</span><span class="key">,</span><span class="key">?</span><span class="key">!</span>
+        </div>
+      </div>
+      <div class="rationale-strip">
+        Transcript recovery: the user corrects the misunderstood intent while keeping the rest of the useful transcript.
+      </div>
+      <div class="footer-actions">
+        <button class="primary-btn" data-go="summary">Di toi tong ket</button>
+      </div>
+    </section>
+
+    <section class="screen" data-screen="summary">
+      <div class="top-row">
+        <button class="back-btn" data-go="home" aria-label="Back">
+          <svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"></path></svg>
+        </button>
+        <span class="subtle">Tong ket phien luyen</span>
+      </div>
+      <div class="score-ring">
+        <div style="text-align:center">
+          <span>Diem tong quan</span>
+          <strong id="scoreValue">85</strong>
+          <span>/100</span>
+        </div>
+      </div>
+      <div class="metric-grid">
+        <div class="metric-card">
+          <span class="subtle">Do luu loat</span>
+          <strong>88</strong>
+          <svg class="sparkline" viewBox="0 0 90 26"><path d="M2 22 C18 5, 22 20, 35 13 S58 4, 88 10" stroke="#37e6ff"></path></svg>
+        </div>
+        <div class="metric-card">
+          <span class="subtle">Tu vung</span>
+          <strong>82</strong>
+          <svg class="sparkline" viewBox="0 0 90 26"><path d="M2 17 C18 19, 25 7, 39 9 S64 21, 88 5" stroke="#9aff72"></path></svg>
+        </div>
+        <div class="metric-card">
+          <span class="subtle">Ngu phap</span>
+          <strong id="grammarValue">84</strong>
+          <svg class="sparkline" viewBox="0 0 90 26"><path d="M2 20 C16 10, 28 14, 39 17 S68 8, 88 12" stroke="#ff6f9f"></path></svg>
+        </div>
+      </div>
+      <div class="rationale-strip">
+        Sau hanh dong: score is a draft evaluation, not a final truth. Users can inspect evidence, correct mistakes, and trigger recalculation.
+      </div>
+      <div class="footer-actions">
+        <button class="primary-btn" data-go="review">Xem lỗi của tôi <span class="badge" id="errorBadge">Phát hiện 2 lỗi</span></button>
+        <button class="ghost-btn" data-go="agency">Xem ranh giới quyền tự chủ</button>
+      </div>
+    </section>
+
+    <section class="screen" data-screen="review">
+      <div class="top-row">
+        <button class="back-btn" data-go="summary" aria-label="Back">
+          <svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"></path></svg>
+        </button>
+        <span class="subtle">Xem lai loi</span>
+      </div>
+      <div class="error-card glass-card">
+        <div class="play-row">
+          <button class="icon-btn" id="playAudio" aria-label="Play original recording">
+            <svg viewBox="0 0 24 24"><polygon class="fill-icon" points="8,5 19,12 8,19"></polygon></svg>
+          </button>
+          <span class="subtle" id="audioLabel">Bản ghi gốc</span>
+        </div>
+        <p class="sentence">User: I <span class="bad-word">goed</span> to the store.</p>
+        <p class="correction">Cach dung hon: I <span style="color:var(--lime)">went</span> to the store.</p>
+        <div class="why-box">
+          <h3>Vi sao</h3>
+          <p style="margin-top:6px">Dong tu "go" la dong tu bat quy tac o thi qua khu.</p>
+        </div>
+        <div class="rationale-strip">
+          Bang chung layer: original recording + highlighted phrase + rule explanation let the learner verify the AI's claim.
+        </div>
+      </div>
+      <div class="footer-actions">
+        <button class="primary-btn" data-go="feedback">Feedback phat am</button>
+        <button class="ghost-btn" data-go="uncertainty">Xem trường hợp không chắc chắn</button>
+      </div>
+    </section>
+
+    <section class="screen" data-screen="feedback">
+      <div class="top-row">
+        <button class="back-btn" data-go="review" aria-label="Back">
+          <svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"></path></svg>
+        </button>
+        <span class="subtle">Phat am</span>
+      </div>
+      <div class="error-card glass-card" id="pronunciationCard">
+        <div class="play-row">
+          <button class="icon-btn" aria-label="Play oat recording">
+            <svg viewBox="0 0 24 24"><polygon class="fill-icon" points="8,5 19,12 8,19"></polygon></svg>
+          </button>
+          <p class="sentence" style="font-size:20px">You said: <span class="bad-word">Oat</span> milk, please.</p>
+        </div>
+        <div class="why-box">
+          <h3>Ghi chu phat am</h3>
+          <p style="margin-top:6px">Nguyen am nghe ngan hon ky vong, nen AI danh dau de user xem lai.</p>
+        </div>
+        <div class="feedback-area">
+          <h3>Feedback này hữu ích không?</h3>
+          <div class="feedback-actions" id="feedbackActions">
+            <button class="pill-btn" id="helpfulBtn">Có, cảm ơn</button>
+            <button class="pill-btn" id="correctBtn">Tôi đã phát âm đúng</button>
+          </div>
+          <div class="toast" id="feedbackToast">Cảm ơn! AI sẽ bỏ qua lỗi này, tính lại điểm và không lưu nó thành mẫu lỗi phát âm.</div>
+        </div>
+        <div class="rationale-strip">
+          Recovery phát âm: feedback không phải điểm kết thúc. Nó thay đổi kết quả hiện tại, giải thích điều gì sẽ được bỏ qua va giữ quyền kiểm soát cho user.
+        </div>
+      </div>
+      <div class="footer-actions">
+        <button class="primary-btn" data-go="home">Ve trang chu</button>
+        <button class="ghost-btn" data-go="feedbackmatrix">Mo ma tran feedback</button>
+      </div>
+    </section>
+
+    <section class="screen" data-screen="labmap">
+      <div class="top-row">
+        <button class="back-btn" data-go="welcome" aria-label="Back">
+          <svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"></path></svg>
+        </button>
+        <span class="subtle">Lab Day 18</span>
+      </div>
+      <h2 style="margin-top:18px">Prototype current-state Day 18</h2>
+      <p style="margin-top:8px">Đây là luồng Day 18 gốc, được dùng làm current state cho phần audit và Before/After của Day 20.</p>
+      <div class="lab-list">
+        <div class="flow-step"><strong>01</strong><div><h3>Onboarding Day 18</h3><p>Kỳ vọng, permission mic, ranh giới dữ liệu, chọn trình độ và điểm bắt đầu.</p></div></div>
+        <div class="flow-step"><strong>02</strong><div><h3>Trong khi hành động Day 18</h3><p>Chuẩn bị chủ đề, nghe trực tiếp, transcript tạm thời, trạng thái phân tích và gợi ý hỗ trợ.</p></div></div>
+        <div class="flow-step"><strong>03</strong><div><h3>Sau hành động Day 18</h3><p>Bảng điểm, bằng chứng, sửa lỗi và nguồn rõ ràng cho từng nhận định.</p></div></div>
+        <div class="flow-step"><strong>04</strong><div><h3>Lỗi và recovery Day 18</h3><p>Transcript nghe sai, âm thanh không chắc chắn, gắn cờ phát âm sai, sửa, thu lại và tính lại điểm.</p></div></div>
+        <div class="flow-step"><strong>05</strong><div><h3>Vòng feedback Day 18</h3><p>Feedback từ user và từ hệ thống được thể hiện dưới dạng tín hiệu rõ ràng và tín hiệu ngầm.</p></div></div>
+      </div>
+      <div class="lab-nav">
+        <button class="primary-btn" data-go="day18ui">Day 18 UI</button>
+        <button class="primary-btn" data-go="day20menu">Phân tích Day 20</button>
+        <button class="ghost-btn" data-go="demo">Đường dẫn demo</button>
+      </div>
+    </section>
+
+    <section class="screen" data-screen="day18ui">
+      <div class="top-row">
+        <button class="back-btn" data-go="labmap" aria-label="Back">
+          <svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"></path></svg>
+        </button>
+        <span class="subtle">Day 18 UI</span>
+      </div>
+      <h2 style="margin-top:18px">UI gốc Day 18 để đối chiếu</h2>
+      <p style="margin-top:8px">Các màn hình bên dưới là prototype Day 18, được giữ lại để làm current state khi so sánh với luồng Get Started của Day 20.</p>
+      <div class="lab-list">
+        <div class="flow-step"><strong>01</strong><div><h3>Onboarding Day 18</h3><p>Chọn level và xin mic permission ngay trong setup ban đầu.</p></div></div>
+        <div class="flow-step"><strong>02</strong><div><h3>Main speaking flow Day 18</h3><p>Home, topic prep, live session, analyzing và hint.</p></div></div>
+        <div class="flow-step"><strong>03</strong><div><h3>Feedback & recovery Day 18</h3><p>Summary, review evidence, pronunciation dispute và uncertainty case.</p></div></div>
+        <div class="flow-step"><strong>04</strong><div><h3>Rationale Day 18</h3><p>Agency, scenario requirement, feedback matrix và design rationale.</p></div></div>
+      </div>
+      <div class="lab-nav">
+        <button class="ghost-btn" data-go="setup">Onboarding Day 18</button>
+        <button class="ghost-btn" data-go="home">Home Day 18</button>
+        <button class="ghost-btn" data-go="prep">Main flow Day 18</button>
+        <button class="ghost-btn" data-go="summary">Summary Day 18</button>
+        <button class="ghost-btn" data-go="review">Evidence review</button>
+        <button class="ghost-btn" data-go="uncertainty">Recovery Day 18</button>
+        <button class="ghost-btn" data-go="scenarios">Scenario req.</button>
+        <button class="ghost-btn" data-go="agency">Agency</button>
+        <button class="ghost-btn" data-go="feedbackmatrix">Feedback 2x2</button>
+        <button class="ghost-btn" data-go="rationale">Rationale</button>
+      </div>
+    </section>
+
+    <section class="screen" data-screen="scenarios">
+      <div class="top-row">
+        <button class="back-btn" data-go="labmap" aria-label="Back">
+          <svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"></path></svg>
+        </button>
+        <span class="subtle">Yêu cầu scenario</span>
+      </div>
+      <h2 style="margin-top:18px">7. Yêu cầu cho từng scenario</h2>
+      <p style="margin-top:8px">Mỗi scenario có flow/màn hình rõ ràng và lý do thiết kế ngắn gắn với rủi ro và recovery.</p>
+      <div class="rationale-grid">
+        <div class="rationale-card">
+          <h3>Scenario 1 - Onboarding lan dau</h3>
+          <p><strong>7.1 Flow/screen:</strong> Welcome and setup screens show the initial context, AI capability, mic/data boundary, level choice, and start point.</p>
+          <p><strong>7.2 Ly do thiet ke:</strong> The AI lacks learner level and permission. It must set expectations before listening, explain limits, and keep mic control reversible.</p>
+        </div>
+        <div class="rationale-card">
+          <h3>Scenario 2 - Chuan bi chu de va ngu canh</h3>
+          <p><strong>7.1 Flow/screen:</strong> Topic cards, coffee-shop goal, vocabulary chips, and Bat dau hoi thoai show what context AI will use and what the learner controls.</p>
+          <p><strong>7.2 Ly do thiet ke:</strong> Multiple practice paths are valid. The AI can suggest context, but it should not decide the learner's speaking goal without consent.</p>
+        </div>
+        <div class="rationale-card">
+          <h3>Scenario 3 - Nguoi hoc bi bi</h3>
+          <p><strong>7.1 Flow/screen:</strong> The AI asks a food question, the learner is silent, and a hint panel appears while the mic remains available.</p>
+          <p><strong>7.2 Ly do thiet ke:</strong> Silence is uncertain. Asking with scaffolded hints is safer than acting for the learner because the user may be thinking, distracted, or stuck.</p>
+        </div>
+        <div class="rationale-card">
+          <h3>Scenario 4 - Transcript bi nghe sai</h3>
+          <p><strong>7.1 Flow/screen:</strong> The incorrect word is highlighted, the bubble becomes an edit field, and the user can confirm or undo the correction.</p>
+          <p><strong>7.2 Ly do thiet ke:</strong> Transcription errors are easy to detect when visible. The learner keeps useful work, fixes only the wrong word, and continues to summary.</p>
+        </div>
+        <div class="rationale-card">
+          <h3>Scenario 5 - Bang chung yeu va phan hoi phat am</h3>
+          <p><strong>7.1 Flow/screen:</strong> Review shows audio evidence, confidence, why explanation, dispute action, retry action, score update, and recovery toast.</p>
+          <p><strong>7.2 Ly do thiet ke:</strong> Weak evidence should not become a firm grade. The AI must Ask, accept user feedback, recalculate, and state what will not be remembered.</p>
+        </div>
+      </div>
+      <div class="footer-actions">
+        <button class="primary-btn" data-go="demo">Mở đường dẫn demo</button>
+      </div>
+    </section>
+
+    <section class="screen" data-screen="options">
+      <div class="top-row">
+        <button class="back-btn" data-go="labmap" aria-label="Back">
+          <svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"></path></svg>
+        </button>
+        <span class="subtle">Nhiều hướng trả lời hợp lệ</span>
+      </div>
+      <h2 style="margin-top:18px">Không chỉ có một đáp án đúng.</h2>
+      <p style="margin-top:8px">AI đưa ra một số hướng đi sau khi nhân viên hỏi về đồ ăn, nhưng người học vẫn giữ quyền lựa chọn.</p>
+      <div class="option-list">
+        <button class="option-card selected-option" data-option>
+          <h3>Giu don gian</h3>
+          <p>No thanks, just the cappuccino.</p>
+        </button>
+        <button class="option-card" data-option>
+          <h3>Them do an</h3>
+          <p>Yes, I'll take a blueberry muffin.</p>
+        </button>
+        <button class="option-card" data-option>
+          <h3>Hoi lai cho ro</h3>
+          <p>Could you repeat the food options, please?</p>
+        </button>
+      </div>
+      <div class="rationale-strip">
+        Risk: if AI supplies one answer, the learner may think it is required. This screen keeps several valid paths visible.
+      </div>
+      <div class="footer-actions">
+        <button class="primary-btn" data-go="hint">Luyen huong da chon</button>
+      </div>
+    </section>
+
+    <section class="screen" data-screen="agency">
+      <div class="top-row">
+        <button class="back-btn" data-go="summary" aria-label="Back">
+          <svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"></path></svg>
+        </button>
+        <span class="subtle">Agency</span>
+      </div>
+      <h2 style="margin-top:18px">Act / Ask / Don't Act</h2>
+      <div class="agency-grid">
+        <div class="agency-card act">
+          <h3>Act - duoc phep</h3>
+          <p>Tu dong luu tu vung goi y va duy tri streak luyen tap cuc bo.</p>
+          <p class="subtle">Rui ro thap, hien ro, de hoan tac.</p>
+        </div>
+        <div class="agency-card ask">
+          <h3>Ask - can xac nhan truoc</h3>
+          <p>Dung goi y, tinh lai diem, hoac luu loi thanh mau hoc tap.</p>
+          <p class="subtle">Huu ich, nhung co thay doi feedback hoac ca nhan hoa.</p>
+        </div>
+        <div class="agency-card dont">
+          <h3>Don't Act - bi chan</h3>
+          <p>Khong chia se ban ghi, khong danh dau trinh do chinh thuc, khong nghe nen.</p>
+          <p class="subtle">Tac dong cao, kho dao nguoc, hoac vuot ngoai permission.</p>
+        </div>
+      </div>
+      <table class="mini-table" aria-label="Agency rationale">
+        <tr><th>Quyet dinh</th><th>Ly do</th></tr>
+        <tr><td>Hint panel</td><td>Ask, vi im lang co the la bi bi, dang suy nghi hoac bi xao nhang.</td></tr>
+        <tr><td>Transcript edit</td><td>User kiem soat source text truoc khi AI cham diem.</td></tr>
+        <tr><td>Phat am dispute</td><td>AI phai chap nhan feedback va tinh lai, khong bao ve diem cu.</td></tr>
+      </table>
+      <div class="footer-actions">
+        <button class="primary-btn" data-go="uncertainty">Tiep: Uncertainty</button>
+      </div>
+    </section>
+
+    <section class="screen" data-screen="uncertainty">
+      <div class="top-row">
+        <button class="back-btn" data-go="review" aria-label="Back">
+          <svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"></path></svg>
+        </button>
+        <span class="subtle">P4 - Uncertainty</span>
+      </div>
+      <h2 style="margin-top:18px">Bang chung am thanh chua du chac.</h2>
+      <div class="error-card glass-card">
+        <h3>Kiem tra phat am: "oat"</h3>
+        <div class="confidence-meter"><span></span></div>
+        <p>Do tin cay: 62%. Tap am chen len nguyen am, nen khong nen cham day la loi chac chan.</p>
+        <table class="mini-table">
+          <tr><th>Da biet</th><td>Transcript ghi "oat milk"; audio co tieng on quan ca phe.</td></tr>
+          <tr><th>Chua biet</th><td>Chua ro nguyen am sai that hay bi tieng on che mat.</td></tr>
+          <tr><th>Recovery</th><td>Cho phep phat lai, ghi am lai hoac bo qua muc nay khi tinh diem.</td></tr>
+        </table>
+      </div>
+      <div class="lab-nav">
+        <button class="ghost-btn" id="retryAudio">Ghi âm lại cụm này</button>
+        <button class="ghost-btn" data-go="feedback">Phản hồi có lỗi</button>
+      </div>
+      <div class="toast" id="retryToast">Da ghi mau moi. Muc bang chung yeu se khong lam giam diem va khong duoc luu thanh loi.</div>
+      <div class="footer-actions">
+        <button class="primary-btn" data-go="feedbackmatrix">Tiep: Feedback 2x2</button>
+      </div>
+    </section>
+
+    <section class="screen" data-screen="feedbackmatrix">
+      <div class="top-row">
+        <button class="back-btn" data-go="feedback" aria-label="Back">
+          <svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"></path></svg>
+        </button>
+        <span class="subtle">05 - Vong feedback</span>
+      </div>
+      <h2 style="margin-top:18px">Ma tran feedback hai chieu</h2>
+      <div class="matrix-grid">
+        <div class="lab-card"><h3>User -> system - explicit</h3><p>Sua transcript, bam "Tôi đã phát âm đúng", chon ly do hoac xac nhan tinh lai diem.</p></div>
+        <div class="lab-card"><h3>User -> system - implicit</h3><p>Im lang lau truoc mic duoc xem la co the bi bi, khong phai bang chung that bai.</p></div>
+        <div class="lab-card"><h3>System -> user - explicit</h3><p>"Đang kiểm tra ngữ pháp...", confidence score, why explanation, and what changed after feedback.</p></div>
+        <div class="lab-card"><h3>System -> user - implicit</h3><p>Hieu ung mic, song am, live transcript mo, highlight do, highlight da trung hoa va vi tri nut chinh.</p></div>
+      </div>
+      <div class="rationale-strip">
+        Feedback is contextual and reversible. The system states how feedback affects the current score and does not treat behavior as absolute truth.
+      </div>
+      <h3 style="margin-top:18px">Ly do can co cho tung loai feedback</h3>
+      <div class="rationale-grid">
+        <div class="rationale-card">
+          <h3>Feedback user ro rang</h3>
+          <p><strong>When:</strong> transcript edit and pronunciation dispute.</p>
+          <p><strong>Muc tieu:</strong> cho phep nguoi hoc sua bang chung AI va tiep tuc tac vu noi.</p>
+          <p><strong>Why explicit:</strong> user dang sua ro rang, nen he thong khong nen ngam suy dien.</p>
+          <p><strong>Response:</strong> cap nhat transcript, bo qua loi bi phan hoi, tinh lai diem va hien dieu se khong duoc ghi nho.</p>
+          <p><strong>Control:</strong> feedback hien ro, co the dao nguoc qua sua/hoan tac va khong dung de cham diem chinh thuc an.</p>
+        </div>
+        <div class="rationale-card">
+          <h3>Feedback user ngam</h3>
+          <p><strong>When:</strong> the learner pauses after the AI asks a question.</p>
+          <p><strong>Muc tieu:</strong> phat hien kha nang bi bi ma khong cat ngang qua som.</p>
+          <p><strong>Why implicit:</strong> tam dung co the la dang nghi, xao nhang hoac roi, nen chi xem la tin hieu yeu.</p>
+          <p><strong>Response:</strong> hien panel goi y thay vi tra loi thay nguoi hoc.</p>
+          <p><strong>Control:</strong> tin hieu khong duoc luu nhu su that va khong anh huong diem.</p>
+        </div>
+        <div class="rationale-card">
+          <h3>Feedback system ro rang</h3>
+          <p><strong>When:</strong> while analyzing, during review, and after recovery.</p>
+          <p><strong>Muc tieu:</strong> noi cho nguoi hoc biet AI dang lam gi, dieu gi chua chac va buoc tiep theo la gi.</p>
+          <p><strong>Why explicit:</strong> cham diem va sua loi anh huong niem tin, nen he thong phai giai thich trang thai, bang chung va hanh dong tiep theo.</p>
+          <p><strong>Response:</strong> hien trang thai dang kiem tra, do tin cay, giai thich ly do, toast xac nhan va diem moi.</p>
+          <p><strong>Control:</strong> user co the xem bang chung, phan hoi, thu lai hoac roi flow.</p>
+        </div>
+        <div class="rationale-card">
+          <h3>Feedback system ngam</h3>
+          <p><strong>When:</strong> during listening, live transcript, error highlighting, and button emphasis.</p>
+          <p><strong>Muc tieu:</strong> dieu huong su chu y ma khong them huong dan dai.</p>
+          <p><strong>Why implicit:</strong> tin hieu thi giac giam ngat quang nhung van cho thay trang thai va kha nang thao tac.</p>
+          <p><strong>Response:</strong> mic sang nghia la dang nghe, transcript mo la tam thoi, highlight do can xem lai, highlight trung hoa la da xu ly.</p>
+          <p><strong>Control:</strong> tin hieu ho tro hanh dong nhung khong quyet dinh thay user.</p>
+        </div>
+      </div>
+      <div class="footer-actions">
+        <button class="primary-btn" data-go="rationale">Mo ly do thiet ke</button>
+      </div>
+    </section>
+
+    <section class="screen" data-screen="rationale">
+      <div class="top-row">
+        <button class="back-btn" data-go="labmap" aria-label="Back">
+          <svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"></path></svg>
+        </button>
+        <span class="subtle">06 - Ly do thiet ke</span>
+      </div>
+      <h2 style="margin-top:18px">7.2. Lý do thiết kế</h2>
+      <div class="rationale-grid">
+        <div class="rationale-card"><h3>1. AI biết gì?</h3><p>AI biết trình độ đã chọn, chủ đề Coffee Shop, transcript hiện tại, độ tin cậy audio, lỗi được gắn cờ và feedback của learner.</p></div>
+        <div class="rationale-card"><h3>2. AI không biết hoặc chưa chắc điều gì?</h3><p>AI không biết im lặng là đang suy nghĩ hay bị bí. Khi bằng chứng audio yếu, AI không chắc có phải lỗi phát âm thật hay không.</p></div>
+        <div class="rationale-card"><h3>3. AI đang giả định điều gì?</h3><p>AI giả định learner muốn tiếp tục role-play, điểm chỉ là feedback nháp và feedback chỉ hữu ích khi có bằng chứng để xem lại.</p></div>
+        <div class="rationale-card"><h3>4. Điều gì có thể sai?</h3><p>AI có thể nghe sai "cappuccino", chấm quá nặng từ "oat", quá tự tin khi audio yếu, hoặc gợi ý một đáp án làm giảm agency của learner.</p></div>
+        <div class="rationale-card"><h3>5. Nếu AI sai, hậu quả là gì và ai bị ảnh hưởng?</h3><p>Learner có thể mất tự tin, luyện sai phát âm, nhận điểm không công bằng, hoặc lo app nghe/lưu dữ liệu ngoài permission.</p></div>
+        <div class="rationale-card"><h3>6. Lỗi có dễ phát hiện và hoàn tác không?</h3><p>Có. Lỗi được highlight, audio có thể phát lại, transcript có thể sửa, cờ phát âm có thể phản hồi và điểm có thể tính lại.</p></div>
+        <div class="rationale-card"><h3>7. AI nên Act, Ask hay Don't Act? Vì sao?</h3><p>Act cho autosave rủi ro thấp như vocabulary và streak. Ask trước khi dùng hint, lưu pattern hoặc tính lại điểm. Don't Act với background listening, chia sẻ bản ghi hoặc chấm điểm chính thức.</p></div>
+        <div class="rationale-card"><h3>8. User có thể xem, sửa, từ chối hoặc hoàn tác ở đâu?</h3><p>User có thể xem bằng chứng trong Review, phát lại bản ghi, sửa transcript, từ chối cờ phát âm và quay lại chủ đề hoặc trang chủ.</p></div>
+        <div class="rationale-card"><h3>9. Feedback nào được thu thập hoặc trả về?</h3><p>Feedback thu thập gồm sửa transcript, helpful/not helpful, dispute và im lặng như tín hiệu ngầm. Feedback trả về gồm trạng thái phân tích, độ tin cậy, giải thích, toast và điểm cập nhật.</p></div>
+        <div class="rationale-card"><h3>10. Flow giúp user tiếp tục mục tiêu như thế nào?</h3><p>Sau lỗi, flow không dừng ở báo cáo lỗi. Nó sửa transcript, bỏ qua bằng chứng yếu, tính lại điểm và giữ learner tiếp tục luyện scenario Coffee Shop.</p></div>
+      </div>
+      <div class="footer-actions">
+        <button class="primary-btn" data-go="demo">Mo demo path 5 phut</button>
+      </div>
+    </section>
+
+    <section class="screen" data-screen="day20menu">
+      <div class="top-row">
+        <button class="back-btn" data-go="welcome" aria-label="Back">
+          <svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"></path></svg>
+        </button>
+        <span class="subtle">Day 20 Lab</span>
+      </div>
+      <h2 style="margin-top:18px">Retention, Engagement & Habit Loop</h2>
+      <p style="margin-top:8px">Dùng khung điện thoại để demo TurTalk Day 20 và dùng panel bên ngoài để giải thích retention logic. Day 18 UI vẫn được giữ nguyên làm current-state reference.</p>
+      <div class="lab-list">
+        <div class="flow-step"><strong>00</strong><div><h3>Current Prototype</h3><p>Day 18 có onboarding, Trail, lesson, speaking entry, missions, XP, streak và recovery flow.</p></div></div>
+        <div class="flow-step"><strong>01</strong><div><h3>Retention Canvas</h3><p>Học sinh THCS Việt Nam, luyện nói ngắn hằng ngày để tự tin hơn.</p></div></div>
+        <div class="flow-step"><strong>02</strong><div><h3>Core Action</h3><p>Hoàn thành một speaking session có feedback/XP.</p></div></div>
+        <div class="flow-step"><strong>03</strong><div><h3>Retention Metric</h3><p>DAU/WAU, D7 Retention và sessions hoàn thành mỗi tuần.</p></div></div>
+      </div>
+      <div class="lab-nav">
+        <button class="primary-btn" data-go="d20current">Bắt đầu walkthrough Day 20</button>
+        <button class="ghost-btn" data-go="demo8">Mở 8 phút đường dẫn demo</button>
+      </div>
+    </section>
+
+    <section class="screen" data-screen="d20current">
+      <div class="top-row">
+        <button class="back-btn" data-go="day20menu" aria-label="Back"><svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"></path></svg></button>
+        <span class="subtle">00 - Current State</span>
+      </div>
+      <h2 style="margin-top:18px">Day 18 prototype là đầu vào.</h2>
+      <p style="margin-top:8px">Theo slide, prototype đã có các phần cần giữ: onboarding, Trail, Unit/Lesson, speaking entry, Missions, Progress, XP, streak, level và recovery flow.</p>
+      <div class="day20-flow">
+        <span>Welcome và đặt kỳ vọng</span>
+        <span>Grade + placement</span>
+        <span>Trail và lesson detail</span>
+        <span>Start speaking</span>
+        <span>Feedback, XP, mission, streak</span>
+      </div>
+      <div class="day20-note">Day 20 không phá flow Day 18; nó làm rõ action tạo value thật và cách sản phẩm kéo học sinh quay lại.</div>
+      <div class="footer-actions">
+        <button class="primary-btn" data-go="d20canvas">Next: Retention Canvas</button>
+      </div>
+    </section>
+
+    <section class="screen" data-screen="d20canvas">
+      <div class="top-row">
+        <button class="back-btn" data-go="d20current" aria-label="Back"><svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"></path></svg></button>
+        <span class="subtle">01 - Canvas</span>
+      </div>
+      <h2 style="margin-top:18px">Customer Retention Canvas</h2>
+      <div class="day20-grid">
+        <div class="day20-mini-card"><strong>Problem</strong><p>Học sinh ngại nói, sợ sai và thiếu feedback cá nhân để biết mình cần sửa gì.</p></div>
+        <div class="day20-mini-card"><strong>Persona</strong><p>Học sinh lớp 6-9 ở Việt Nam, cần mục tiêu ngắn và feedback nhanh để duy trì động lực.</p></div>
+        <div class="day20-mini-card"><strong>Anti-persona</strong><p>Người đã nói thành thạo, người chỉ học grammar/reading, giáo viên hoặc admin.</p></div>
+        <div class="day20-mini-card"><strong>Why</strong><p>Muốn nói câu đơn giản đúng hơn, bớt ngại phát âm và thấy tiến bộ nhanh.</p></div>
+        <div class="day20-mini-card"><strong>Alternative</strong><p>Học trên lớp, làm bài tập sách, xem video/nghe mẫu nhưng thiếu feedback cá nhân.</p></div>
+        <div class="day20-mini-card"><strong>Frequency</strong><p>Daily hoặc near-daily vì speaking cần luyện ngắn, lặp lại đều.</p></div>
+      </div>
+      <div class="footer-actions">
+        <button class="primary-btn" data-go="d20core">Next: Core Action</button>
+      </div>
+    </section>
+
+    <section class="screen" data-screen="d20core">
+      <div class="top-row">
+        <button class="back-btn" data-go="d20canvas" aria-label="Back"><svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"></path></svg></button>
+        <span class="subtle">02 - Core Action</span>
+      </div>
+      <h2 style="margin-top:18px">Core Action & Active User</h2>
+      <div class="phone-kpi">
+        <div><strong>Job</strong><p>Luyện nói ngắn mỗi ngày.</p></div>
+        <div><strong>Action</strong><p>Hoàn thành session và xem feedback/XP.</p></div>
+        <div><strong>Value</strong><p>Thấy mình tiến bộ và biết cần sửa gì.</p></div>
+        <div><strong>Active</strong><p>1 speaking session có feedback trong ngày.</p></div>
+      </div>
+      <div class="day20-note">Mở app, xem dashboard hoặc chỉ nhìn lesson chưa đủ. Active user chỉ được tính khi học sinh đã nói, nộp bài, nhận feedback và thấy progress.</div>
+      <div class="footer-actions">
+        <button class="primary-btn" data-go="d20retention">Next: Retention Metric</button>
+      </div>
+    </section>
+
+    <section class="screen" data-screen="d20retention">
+      <div class="top-row">
+        <button class="back-btn" data-go="d20core" aria-label="Back"><svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"></path></svg></button>
+        <span class="subtle">03 - Retention</span>
+      </div>
+      <h2 style="margin-top:18px">Chọn DAU/WAU và D7 Retention.</h2>
+      <p style="margin-top:8px">Slide xác định natural frequency của TurTalk là daily hoặc near-daily vì speaking cần luyện ngắn, lặp lại đều.</p>
+      <div class="day20-mini-card" style="margin-top:16px">
+        <strong>Retention Metric</strong>
+        <p>DAU/WAU để đo mức độ dùng lặp lại trong tuần; D7 Retention để xem học sinh đã activated có quay lại luyện sau 7 ngày không.</p>
+      </div>
+      <div class="day20-note">Metric bổ trợ: số speaking sessions hoàn thành trên mỗi học sinh trong tuần.</div>
+      <div class="footer-actions">
+        <button class="primary-btn" data-go="d20audit">Next: Onboarding Audit</button>
+      </div>
+    </section>
+
+    <section class="screen" data-screen="d20audit">
+      <div class="top-row">
+        <button class="back-btn" data-go="d20retention" aria-label="Back"><svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"></path></svg></button>
+        <span class="subtle">04 - Audit</span>
+      </div>
+      <h2 style="margin-top:18px">Audit onboarding hiện tại</h2>
+      <div class="day20-grid">
+        <div class="day20-mini-card"><strong>Keep</strong><p>Grade, placement, Trail, lesson detail để user hiểu mình sắp luyện gì.</p></div>
+        <div class="day20-mini-card"><strong>Simplify</strong><p>Giảm text dài trước bài; CTA Start speaking và Continue learning rõ hơn.</p></div>
+        <div class="day20-mini-card"><strong>Delay</strong><p>Cài đặt phụ và profile fields chưa cần trước first value.</p></div>
+        <div class="day20-mini-card"><strong>Remove</strong><p>Không bắt user điền quá nhiều trường trước khi được luyện nói.</p></div>
+      </div>
+      <div class="phone-kpi">
+        <div><strong>0</strong><p>Profile fields phụ trước bài</p></div>
+        <div><strong>1</strong><p>CTA chính</p></div>
+        <div><strong>+XP</strong><p>Reward sau session</p></div>
+        <div><strong>D1</strong><p>Active student trong ngày</p></div>
+      </div>
+      <div class="footer-actions">
+        <button class="primary-btn" data-go="d20redesign">Next: Redesigned Onboarding</button>
+      </div>
+    </section>
+
+    <section class="screen" data-screen="d20redesign">
+      <div class="top-row">
+        <button class="back-btn" data-go="d20audit" aria-label="Back"><svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"></path></svg></button>
+        <span class="subtle">05 - Redesign</span>
+      </div>
+      <h2 style="margin-top:18px">Đường tới first value sau thiết kế lại</h2>
+      <div class="day20-flow">
+        <span>Dashboard: mission, XP, streak</span>
+        <span>Continue learning</span>
+        <span>Trail và lesson detail</span>
+        <span>Start speaking</span>
+        <span>User hoàn thành speaking session</span>
+        <span>Feedback, XP, mission reward</span>
+        <span>Aha: mình vừa tiến bộ</span>
+      </div>
+      <div class="day20-note">Activation xảy ra khi học sinh hoàn thành speaking session và thấy feedback/XP, không phải khi chỉ mở bài học.</div>
+      <div class="footer-actions">
+        <button class="primary-btn" data-go="d20before">Next: Before/After</button>
+      </div>
+    </section>
+
+    <section class="screen" data-screen="d20before">
+      <div class="top-row">
+        <button class="back-btn" data-go="d20redesign" aria-label="Back"><svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"></path></svg></button>
+        <span class="subtle">06 - Compare</span>
+      </div>
+      <h2 style="margin-top:18px">Before / After & Recovery</h2>
+      <div class="day20-grid">
+        <div class="day20-mini-card"><strong>Before</strong><p>Bấm Claim reward khi chưa hoàn thành dễ gây nhầm lẫn hoặc cảm giác lỗi.</p></div>
+        <div class="day20-mini-card"><strong>After</strong><p>Hệ thống dẫn user về lesson hiện tại trong Trail để tiếp tục học.</p></div>
+        <div class="day20-mini-card"><strong>Recovery</strong><p>Không dừng ở trạng thái lỗi; giữ động lực và đưa user quay lại core action.</p></div>
+      </div>
+      <div class="footer-actions">
+        <button class="primary-btn" data-go="d20ladder">Next: Measurement Ladder</button>
+      </div>
+    </section>
+
+    <section class="screen" data-screen="d20ladder">
+      <div class="top-row">
+        <button class="back-btn" data-go="d20before" aria-label="Back"><svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"></path></svg></button>
+        <span class="subtle">07 - Ladder</span>
+      </div>
+      <h2 style="margin-top:18px">Measurement Ladder</h2>
+      <div class="day20-flow">
+        <span>Marketing / Traffic: visitor và campaign click</span>
+        <span>Visitor: onboarding completed</span>
+        <span>Activation: speaking session đầu tiên có feedback</span>
+        <span>Core Action: speaking sessions completed</span>
+        <span>Retention: D7 retained students, DAU/WAU</span>
+        <span>Progress: XP, level, missions, streak</span>
+      </div>
+      <div class="footer-actions">
+        <button class="primary-btn" data-go="d20northstar">Next: North Star</button>
+      </div>
+    </section>
+
+    <section class="screen" data-screen="d20northstar">
+      <div class="top-row">
+        <button class="back-btn" data-go="d20ladder" aria-label="Back"><svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"></path></svg></button>
+        <span class="subtle">08 - North Star</span>
+      </div>
+      <h2 style="margin-top:18px">North Star & Inputs</h2>
+      <div class="day20-mini-card" style="margin-top:16px">
+        <strong>North Star Metric</strong>
+        <p>Số speaking sessions hoàn thành có feedback mỗi tuần.</p>
+      </div>
+      <div class="day20-grid">
+        <div class="day20-mini-card"><strong>Input 1</strong><p>Onboarding completion rate.</p></div>
+        <div class="day20-mini-card"><strong>Input 2</strong><p>Tỷ lệ bắt đầu speaking session đầu tiên.</p></div>
+        <div class="day20-mini-card"><strong>Input 3</strong><p>Daily missions completed / rewards claimed.</p></div>
+      </div>
+      <div class="day20-note">Leading: onboarding completed, session started, mission completed. Lagging: weekly retained students, sessions completed, XP/progress level.</div>
+      <div class="footer-actions">
+        <button class="primary-btn" data-go="d20nature">Next: Nature vs Nurture</button>
+      </div>
+    </section>
+
+    <section class="screen" data-screen="d20nature">
+      <div class="top-row">
+        <button class="back-btn" data-go="d20northstar" aria-label="Back"><svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"></path></svg></button>
+        <span class="subtle">09 - Nature</span>
+      </div>
+      <h2 style="margin-top:18px">Nature vs Nurture</h2>
+      <div class="day20-grid">
+        <div class="day20-mini-card"><strong>Nature</strong><p>Speaking practice có nhịp daily/near-daily; mỗi lần học ngắn và cần nhắc lại thường xuyên.</p></div>
+        <div class="day20-mini-card"><strong>Internal trigger</strong><p>“Em sợ mình nói chưa tốt”, “em cần luyện trước buổi học/kiểm tra”.</p></div>
+        <div class="day20-mini-card"><strong>External trigger</strong><p>Daily mission, Continue learning CTA, progress, streak và XP trên dashboard.</p></div>
+        <div class="day20-mini-card"><strong>Nurture metric</strong><p>Mission completion, reward claimed, DAU/WAU và D7 retention.</p></div>
+      </div>
+      <div class="footer-actions">
+        <button class="primary-btn" data-go="d20hook">Next: Hook Model</button>
+      </div>
+    </section>
+
+    <section class="screen" data-screen="d20hook">
+      <div class="top-row">
+        <button class="back-btn" data-go="d20nature" aria-label="Back"><svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"></path></svg></button>
+        <span class="subtle">10 - Hook</span>
+      </div>
+      <h2 style="margin-top:18px">Hook Model</h2>
+      <div class="day20-flow">
+        <span>Internal trigger: sợ nói chưa tốt hoặc muốn giữ streak</span>
+        <span>External trigger: Daily mission, Continue learning, XP/progress</span>
+        <span>Action: mở lesson hiện tại -> Start speaking -> hoàn thành session</span>
+        <span>Reward: feedback, XP, completion, mission reward</span>
+        <span>Investment: progress/streak và lỗi đã lưu cho lần luyện sau</span>
+      </div>
+      <div class="day20-note">Daily missions không tạo habit giả; chúng khuếch đại nhu cầu speaking practice có thật và có nhịp daily/near-daily.</div>
+      <div class="footer-actions">
+        <button class="primary-btn" data-go="d20tracking">Next: Tracking</button>
+      </div>
+    </section>
+
+    <section class="screen" data-screen="d20tracking">
+      <div class="top-row">
+        <button class="back-btn" data-go="d20hook" aria-label="Back"><svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"></path></svg></button>
+        <span class="subtle">11 - Tracking</span>
+      </div>
+      <h2 style="margin-top:18px">Metric Tracking Requirement</h2>
+      <div class="day20-grid">
+        <div class="day20-mini-card"><strong>Onboarding</strong><p>onboarding_completed khi user lưu xong grade + placement.</p></div>
+        <div class="day20-mini-card"><strong>Lesson</strong><p>lesson_opened khi user mở lesson detail từ Trail.</p></div>
+        <div class="day20-mini-card"><strong>Speaking</strong><p>speaking_session_started và speaking_session_completed.</p></div>
+        <div class="day20-mini-card"><strong>Reward</strong><p>mission_reward_claimed chỉ ghi khi claim thành công, không ghi trùng khi refresh.</p></div>
+      </div>
+      <div class="footer-actions">
+        <button class="primary-btn" data-go="demo8">Next: 8-minute Demo</button>
+      </div>
+    </section>
+
+    <section class="screen" data-screen="demo8">
+      <div class="top-row">
+        <button class="back-btn" data-go="d20tracking" aria-label="Back"><svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"></path></svg></button>
+        <span class="subtle">12 - đường dẫn demo</span>
+      </div>
+      <h2 style="margin-top:18px">8-minute Day 20 demo path</h2>
+      <div class="demo-list">
+        <div class="demo-item"><span>0:00</span><p>TurTalk use case, persona lớp 6-9, product promise</p><button class="pill-btn" data-go="d20canvas">Open</button></div>
+        <div class="demo-item"><span>1:00</span><p>Daily/near-daily frequency, core action, active user</p><button class="pill-btn" data-go="d20core">Open</button></div>
+        <div class="demo-item"><span>1:50</span><p>DAU/WAU, D7 Retention và sessions mỗi tuần</p><button class="pill-btn" data-go="d20retention">Open</button></div>
+        <div class="demo-item"><span>2:40</span><p>Onboarding audit, Continue learning, Start speaking, first value</p><button class="pill-btn" data-go="d20audit">Open</button></div>
+        <div class="demo-item"><span>4:20</span><p>North Star, input metrics, leading/lagging indicators</p><button class="pill-btn" data-go="d20northstar">Open</button></div>
+        <div class="demo-item"><span>5:15</span><p>Nature/Nurture, daily missions, XP, streak, Hook Model</p><button class="pill-btn" data-go="d20hook">Open</button></div>
+        <div class="demo-item"><span>6:20</span><p>Tracking requirement và duplicate control</p><button class="pill-btn" data-go="d20tracking">Open</button></div>
+        <div class="demo-item"><span>7:15</span><p>Before/After: recovery đưa user về lesson hiện tại</p><button class="pill-btn" data-go="d20before">Open</button></div>
+      </div>
+      <div class="footer-actions">
+        <button class="primary-btn" data-go="day20menu">Back to Day 20 Hub</button>
+      </div>
+    </section>
+
+    <section class="screen" data-screen="demo">
+      <div class="top-row">
+        <button class="back-btn" data-go="labmap" aria-label="Back">
+          <svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"></path></svg>
+        </button>
+        <span class="subtle">07 - Demo path</span>
+      </div>
+      <h2 style="margin-top:18px">Demo path 5 phut</h2>
+      <div class="demo-list">
+        <div class="demo-item"><span>0:00</span><p>Scope and user problem</p><button class="pill-btn" data-go="labmap">Open</button></div>
+        <div class="demo-item"><span>0:20</span><p>Yêu cầu scenario: flow and rationale</p><button class="pill-btn" data-go="scenarios">Open</button></div>
+        <div class="demo-item"><span>0:30</span><p>Onboarding, expectations, permissions</p><button class="pill-btn" data-go="setup">Open</button></div>
+        <div class="demo-item"><span>1:15</span><p>Main speaking flow and Ask hint</p><button class="pill-btn" data-go="prep">Open</button></div>
+        <div class="demo-item"><span>2:15</span><p>Transcript error and evidence review</p><button class="pill-btn" data-go="edit">Open</button></div>
+        <div class="demo-item"><span>3:00</span><p>Weak evidence and pronunciation dispute</p><button class="pill-btn" data-go="uncertainty">Open</button></div>
+        <div class="demo-item"><span>3:45</span><p>Feedback 2x2 and recalculation</p><button class="pill-btn" data-go="feedbackmatrix">Open</button></div>
+        <div class="demo-item"><span>4:45</span><p>Ly do thiet ke and remaining risk</p><button class="pill-btn" data-go="rationale">Open</button></div>
+      </div>
+      <div class="footer-actions">
+        <button class="primary-btn" data-go="welcome">Bat dau demo</button>
+      </div>
+    </section>
+  </main>
+
+  <aside class="day20-panel" aria-label="Day 20 contextual lab analysis">
+    <div id="day20PanelContent"></div>
+  </aside>
+  </div>
+
+  <script>
+    const screens = ["welcome", "d20start", "d20level", "d20scenario", "d20mic", "d20speak", "d20instant", "d20aha", "setup", "home", "prep", "listening", "analyzing", "hint", "edit", "summary", "review", "feedback", "labmap", "day18ui", "scenarios", "options", "agency", "uncertainty", "feedbackmatrix", "rationale", "day20menu", "d20current", "d20canvas", "d20core", "d20retention", "d20audit", "d20redesign", "d20before", "d20ladder", "d20northstar", "d20nature", "d20hook", "d20tracking", "demo8", "demo"];
+    const screenEls = [...document.querySelectorAll(".screen")];
+    const goButtons = document.querySelectorAll("[data-go]");
+    const levelButtons = document.querySelectorAll("[data-level]");
+    const optionButtons = document.querySelectorAll("[data-option]");
+    const liveTranscript = document.getElementById("liveTranscript");
+    const transcriptInput = document.getElementById("transcriptInput");
+    const confirmEdit = document.getElementById("confirmEdit");
+    const undoEdit = document.getElementById("undoEdit");
+    const playAudio = document.getElementById("playAudio");
+    const audioLabel = document.getElementById("audioLabel");
+    const correctBtn = document.getElementById("correctBtn");
+    const helpfulBtn = document.getElementById("helpfulBtn");
+    const feedbackActions = document.getElementById("feedbackActions");
+    const feedbackToast = document.getElementById("feedbackToast");
+    const pronunciationCard = document.getElementById("pronunciationCard");
+    const scoreValue = document.getElementById("scoreValue");
+    const grammarValue = document.getElementById("grammarValue");
+    const errorBadge = document.getElementById("errorBadge");
+    const retryAudio = document.getElementById("retryAudio");
+    const retryToast = document.getElementById("retryToast");
+
+    let activeScreen = "welcome";
+    let typingTimer = null;
+
+    const day20SummaryPanel = `
+      <p class="subtle">Lab Day 20 - Retention, Engagement & Habit Loop</p>
+      <h2>Tóm tắt Day 20 - TurTalk</h2>
+      <p style="margin-top:8px">Panel bên phải thay đổi theo walkthrough. Ở màn hình Day 18 hoặc màn hình mở đầu, panel hiển thị tóm tắt tổng quan Day 20. Ở từng màn hình Day 20, panel chỉ hiển thị nội dung phân tích tương ứng.</p>
+      <section class="day20-section">
+        <h3>Tổng quan bài nộp</h3>
+        <p><strong>Product:</strong> TurTalk - app luyện nói tiếng Anh cho học sinh THCS Việt Nam.</p>
+        <p><strong>Main scenario:</strong> học sinh mở Trail hiện tại, bắt đầu speaking lesson, nhận feedback, XP, mission reward và streak progress.</p>
+        <p><strong>Đầu vào Day 18:</strong> onboarding, Trail, Unit/Lesson, speaking entry, Missions, Progress, XP, streak, level và recovery flow.</p>
+        <p><strong>Trọng tâm Day 20:</strong> chứng minh prototype dẫn user tới hành động tạo value thật: hoàn thành speaking session có feedback.</p>
+      </section>
+      <section class="day20-section">
+        <h3>Các thành phần bắt buộc đã hoàn thành</h3>
+        <div class="day20-grid">
+          <div class="day20-mini-card"><strong>00 - Prototype hiện tại</strong><p>Giữ flow Day 18 làm input state.</p></div>
+          <div class="day20-mini-card"><strong>01 - Retention Canvas</strong><p>Persona lớp 6-9, why, alternative và daily/near-daily frequency.</p></div>
+          <div class="day20-mini-card"><strong>02 - Core Action</strong><p>Hoàn thành ít nhất 1 speaking session có feedback/XP.</p></div>
+          <div class="day20-mini-card"><strong>03 - Retention Metric</strong><p>DAU/WAU, D7 Retention và sessions completed per student per week.</p></div>
+          <div class="day20-mini-card"><strong>04-06 - Onboarding</strong><p>Giữ Grade/Placement/Trail, giảm text dài, delay profile fields và có recovery path.</p></div>
+          <div class="day20-mini-card"><strong>07-08 - Measurement</strong><p>North Star là số speaking sessions hoàn thành có feedback mỗi tuần.</p></div>
+          <div class="day20-mini-card"><strong>09-10 - Habit</strong><p>Daily missions, XP, streak, progress và Continue learning khuếch đại nhu cầu thật.</p></div>
+          <div class="day20-mini-card"><strong>11-12 - Tracking & Demo</strong><p>Event tracking chống ghi trùng vì refresh và demo path 8 phút.</p></div>
+        </div>
+      </section>
+      <section class="day20-section">
+        <h3>Cách xem bài</h3>
+        <p>Dùng khung điện thoại để đi qua clickable walkthrough. Mở <strong>Day 20 Lab</strong> từ màn welcome, rồi đi theo các mục 00-12. Panel này sẽ cập nhật theo mục được chọn thay vì hiện tất cả phân tích cùng lúc.</p>
+      </section>
+    `;
+
+    const day20Panels = {
+      d20start: `
+        <p class="subtle">UI chính Day 20 - Dashboard / Continue learning</p>
+        <h2>Entry mới bám sát slide TurTalk</h2>
+        <section class="day20-section">
+          <h3>Thay đổi so với Day 18</h3>
+          <p>Nút Get Started không còn chỉ mở tour/onboarding. Nó đưa học sinh vào dashboard có Trail hiện tại, mission hôm nay, XP, streak và CTA Continue learning.</p>
+          <table>
+            <tr><th>Product promise</th><td>Nói một chút mỗi ngày, nhận feedback ngay, thấy mình tiến bộ.</td></tr>
+            <tr><th>Persona</th><td>Học sinh lớp 6-9 cần mục tiêu ngắn và feedback nhanh để duy trì động lực.</td></tr>
+            <tr><th>Retention intent</th><td>Daily mission và streak không thay thế value; chúng kéo user quay lại speaking session thật.</td></tr>
+          </table>
+          <div class="day20-note">UI Day 18 được giữ trong nút Day 18 Lab để audit current-state và so sánh.</div>
+        </section>
+      `,
+      d20level: `
+        <p class="subtle">UI chính Day 20 - Grade + placement</p>
+        <h2>Giữ input cần thiết, delay phần phụ</h2>
+        <section class="day20-section">
+          <h3>Vì sao màn hình này tồn tại</h3>
+          <p>Slide nói giữ Grade và Placement vì chúng giúp user hiểu mình sắp học gì và giúp hệ thống chọn Trail đúng. Những trường profile phụ không cần trước first value.</p>
+          <table>
+            <tr><th>Keep</th><td>Grade, placement, Trail, lesson detail.</td></tr>
+            <tr><th>Simplify</th><td>Giảm text dài trước bài, CTA rõ hơn.</td></tr>
+            <tr><th>Delay</th><td>Cài đặt phụ và profile fields sau khi học sinh đã nhận value.</td></tr>
+          </table>
+        </section>
+      `,
+      d20scenario: `
+        <p class="subtle">UI chính Day 20 - Trail / lesson detail</p>
+        <h2>Lesson detail dẫn thẳng tới speaking</h2>
+        <section class="day20-section">
+          <h3>Vì sao giữ lesson detail trước khi nói</h3>
+          <p>Lesson detail giúp học sinh hiểu nhiệm vụ ngắn, XP nhận được và daily mission liên quan. Nó định hướng, nhưng không chặn first value bằng quá nhiều nội dung.</p>
+          <table>
+            <tr><th>Core Job</th><td>Luyện nói ngắn để phản xạ tốt hơn và bớt ngại sai.</td></tr>
+            <tr><th>Core Action Target</th><td>Start speaking -> hoàn thành session -> xem feedback/XP.</td></tr>
+            <tr><th>Không tính active</th><td>Chỉ mở dashboard hoặc xem lesson mà chưa nói.</td></tr>
+          </table>
+        </section>
+      `,
+      d20mic: `
+        <p class="subtle">UI chính Day 20 - Start speaking</p>
+        <h2>Permission và CTA đúng thời điểm</h2>
+        <section class="day20-section">
+          <h3>Day 20 onboarding change</h3>
+          <p>Microphone permission được delay tới ngay trước speaking session. User đã biết lesson, XP và mission nên hiểu vì sao cần mic.</p>
+          <table>
+            <tr><th>Before</th><td>Dễ bị hiểu như cài đặt kỹ thuật trước khi thấy value.</td></tr>
+            <tr><th>After</th><td>Gắn mic với hành động Start speaking và feedback ngay sau đó.</td></tr>
+            <tr><th>Recovery</th><td>Nếu mission chưa xong hoặc claim lỗi, hệ thống đưa user về lesson hiện tại thay vì chặn lại.</td></tr>
+          </table>
+        </section>
+      `,
+      d20speak: `
+        <p class="subtle">UI chính Day 20 - First core action</p>
+        <h2>Học sinh thực hiện hành vi thật</h2>
+        <section class="day20-section">
+          <h3>Core action trong UI</h3>
+          <p>Core action là học sinh đã nói, nộp speaking session, nhận feedback và thấy tiến bộ. Đây là hành vi tạo value thật, không phải chỉ mở app.</p>
+          <table>
+            <tr><th>Không được tính</th><td>Mở app, xem dashboard, mở lesson detail.</td></tr>
+            <tr><th>Được tính</th><td>Hoàn thành speaking session có feedback.</td></tr>
+            <tr><th>Event</th><td>speaking_session_started và speaking_session_completed.</td></tr>
+          </table>
+        </section>
+      `,
+      d20instant: `
+        <p class="subtle">UI chính Day 20 - Feedback + XP</p>
+        <h2>Feedback tức thì tạo activation</h2>
+        <section class="day20-section">
+          <h3>Khoảnh khắc activation</h3>
+          <p>Học sinh nhận feedback cụ thể, XP và mission progress ngay sau khi nói. Đây là bằng chứng “mình vừa tiến bộ”, đúng product promise trong slide.</p>
+          <table>
+            <tr><th>Activation</th><td>User hoàn thành session đầu tiên và xem feedback/XP.</td></tr>
+            <tr><th>Mission</th><td>Daily speaking mission được cập nhật sau hành vi thật.</td></tr>
+            <tr><th>Tracking</th><td>speaking_session_completed có session_id để tránh ghi trùng vì refresh.</td></tr>
+          </table>
+        </section>
+      `,
+      d20aha: `
+        <p class="subtle">UI chính Day 20 - Reward + habit loop</p>
+        <h2>Từ speaking session tới returning active student</h2>
+        <section class="day20-section">
+          <h3>Vì sao đây là điểm kết của main flow Day 20</h3>
+          <p>Sau feedback, XP và reward, user có lý do quay lại: giữ streak, mở lesson tiếp theo, hoặc luyện lại lỗi vừa được phát hiện. Đây là Hook Model trong slide.</p>
+          <table>
+            <tr><th>Trigger</th><td>Daily mission, Continue learning, progress, streak, XP.</td></tr>
+            <tr><th>Action</th><td>Mở lesson hiện tại -> Start speaking -> hoàn thành session.</td></tr>
+            <tr><th>Reward + Investment</th><td>Feedback, XP, mission reward, level progress và lỗi được lưu cho lần luyện sau.</td></tr>
+          </table>
+        </section>
+      `,
+      day18ui: `
+        <p class="subtle">Day 18 UI - Current State Reference</p>
+        <h2>UI Day 18 được tách riêng để đối chiếu</h2>
+        <section class="day20-section">
+          <h3>Vai trò của Day 18 UI</h3>
+          <p>Màn này không phải luồng chính nữa. Nó là nơi gom các UI gốc của Day 18 để người chấm có thể so sánh với luồng Day 20 khi bấm Get Started.</p>
+          <table>
+            <tr><th>Day 18 UI</th><td>Làm current state: onboarding Day 18, permission sớm, topic prep và recovery flow Day 18.</td></tr>
+            <tr><th>Day 20 UI</th><td>Làm after state: value proposition ngắn, minimum setup, permission đúng thời điểm, first core action và feedback ngay.</td></tr>
+            <tr><th>Lý do tách riêng</th><td>Giúp Before/After rõ ràng mà không làm luồng chính Day 20 bị lẫn với prototype Day 18.</td></tr>
+          </table>
+        </section>
+      `,
+      d20current: `
+        <p class="subtle">00 - Prototype Day 18 hiện tại</p>
+        <h2>Đầu vào current state</h2>
+        <section class="day20-section">
+          <h3>Những gì có từ Day 18</h3>
+          <p>Prototype gốc là một lát cắt mobile của TurTalk: user onboarding, chọn grade/placement, đi theo Trail, mở Unit/Lesson, bắt đầu speaking, nhận feedback, XP, mission reward, streak và progress.</p>
+          <div class="day20-flow">
+            <span>Welcome và đặt kỳ vọng</span>
+            <span>Thiết lập trình độ và ranh giới microphone</span>
+            <span>Trail và lesson detail</span>
+            <span>Start speaking</span>
+            <span>Feedback, XP, mission, streak và recovery</span>
+          </div>
+          <div class="day20-note">Day 20 giữ lát cắt sản phẩm này. Mục tiêu là nối flow hiện có với retention, activation, natural frequency, habit design và measurement.</div>
+        </section>
+      `,
+      d20canvas: `
+        <p class="subtle">01 - Customer Retention Canvas</p>
+        <h2>Canvas use case</h2>
+        <section class="day20-section">
+          <h3>Câu trả lời Canvas</h3>
+          <table>
+            <tr><th>Thành phần</th><th>Câu trả lời cho TurTalk</th><th>Vì sao quan trọng</th></tr>
+            <tr><td>The Problem</td><td>Học sinh ngại nói tiếng Anh, sợ phát âm sai và thiếu feedback cá nhân để biết mình cần sửa gì.</td><td>Viết theo pain thật của học sinh, không chỉ liệt kê tính năng.</td></tr>
+            <tr><td>The Persona</td><td>Học sinh lớp 6-9 ở Việt Nam, đang học tiếng Anh ở trường và cần mục tiêu ngắn để duy trì động lực.</td><td>Persona có nhịp học hằng ngày/near-daily và cần feedback nhanh.</td></tr>
+            <tr><td>Anti-persona</td><td>Người đã nói thành thạo, người chỉ học grammar/reading, giáo viên hoặc admin.</td><td>Những nhóm này không nhận value chính từ speaking flow.</td></tr>
+            <tr><td>The Why</td><td>Muốn nói câu đơn giản đúng hơn, bớt ngại phát âm và thấy tiến bộ nhanh.</td><td>Outcome là sự tự tin và tiến bộ thấy được.</td></tr>
+            <tr><td>The Alternative</td><td>Học trên lớp, làm bài tập sách, xem video/nghe mẫu nhưng thiếu feedback cá nhân, hoặc bỏ qua speaking vì sợ sai.</td><td>Alternative cho thấy vì sao feedback/XP/streak có vai trò giữ thói quen.</td></tr>
+            <tr><td>The Frequency</td><td>Daily hoặc near-daily vì speaking cần luyện ngắn, lặp lại đều.</td><td>Metric retention phải khớp cadence thật của sản phẩm.</td></tr>
+          </table>
+        </section>
+      `,
+      d20core: `
+        <p class="subtle">02 - Core Action & Active User</p>
+        <h2>Hành vi tạo value</h2>
+        <section class="day20-section">
+          <h3>Định nghĩa Core Action</h3>
+          <div class="day20-grid">
+            <div class="day20-mini-card"><strong>Core Job</strong><p>Hoàn thành một bài luyện nói ngắn và nhận feedback/XP để thấy mình tiến bộ.</p></div>
+            <div class="day20-mini-card"><strong>Core Action</strong><p>Học sinh hoàn thành một speaking session có feedback.</p></div>
+            <div class="day20-mini-card"><strong>Why This Creates Value</strong><p>User đã nói, nộp bài, nhận feedback và thấy progress qua XP/mission.</p></div>
+            <div class="day20-mini-card"><strong>Counting Rule</strong><p>Chỉ đếm khi session completed, feedback hiển thị và session_id chưa được ghi nhận trước đó.</p></div>
+          </div>
+          <div class="day20-note">Định nghĩa active user theo slide: một học sinh active trong ngày khi hoàn thành ít nhất 1 speaking session có feedback.</div>
+        </section>
+      `,
+      d20retention: `
+        <p class="subtle">03 - Natural Frequency & Retention Metric</p>
+        <h2>Nhịp retention</h2>
+        <section class="day20-section">
+          <h3>Lựa chọn metric</h3>
+          <table>
+            <tr><th>Trường</th><th>Quyết định</th></tr>
+            <tr><td>Persona & Use Case</td><td>Học sinh lớp 6-9 luyện nói ngắn để cải thiện phản xạ và tự tin.</td></tr>
+            <tr><td>Natural Frequency</td><td>Daily hoặc near-daily vì speaking cần luyện ngắn, lặp lại đều.</td></tr>
+            <tr><td>Core Action</td><td>Hoàn thành speaking session và nhận feedback/XP.</td></tr>
+            <tr><td>Active User Definition</td><td>Ít nhất 1 speaking session có feedback trong ngày.</td></tr>
+            <tr><td>Retention Metric</td><td>DAU/WAU và D7 Retention cho activated students.</td></tr>
+            <tr><td>Lý do</td><td>Đo được liệu học sinh đã activated có quay lại luyện sau 7 ngày và dùng lặp lại trong tuần không.</td></tr>
+          </table>
+        </section>
+      `,
+      d20audit: `
+        <p class="subtle">04 - Audit onboarding</p>
+        <h2>Friction của flow hiện tại</h2>
+        <section class="day20-section">
+          <h3>Keep / Remove / Delay / Simplify</h3>
+          <table>
+            <tr><th>Bước hiện tại</th><th>Nhãn</th><th>Giải thích</th></tr>
+            <tr><td>Grade + placement</td><td>Keep</td><td>Đủ để user hiểu mình sắp luyện gì và hệ thống chọn Trail phù hợp.</td></tr>
+            <tr><td>Trail / lesson detail</td><td>Keep</td><td>Định hướng bài học và XP trước khi user bấm Start speaking.</td></tr>
+            <tr><td>Text dài trước bài</td><td>Simplify</td><td>Giảm đọc thụ động trước first value.</td></tr>
+            <tr><td>Profile fields phụ</td><td>Delay</td><td>Không cần trước khi học sinh nhận feedback đầu tiên.</td></tr>
+            <tr><td>Form setup dài</td><td>Remove</td><td>Không bắt user điền quá nhiều trước khi được luyện nói.</td></tr>
+            <tr><td>Claim reward khi chưa xong</td><td>Recovery</td><td>Dẫn user về lesson hiện tại trong Trail để tiếp tục học.</td></tr>
+          </table>
+          <div class="day20-note">Mục tiêu Day 20: rút ngắn đường tới first value nhưng vẫn giữ Trail, lesson detail, XP và mission vì chúng làm rõ hành trình học.</div>
+        </section>
+      `,
+      d20redesign: `
+        <p class="subtle">05 - Onboarding thiết kế lại</p>
+        <h2>Đường tới giá trị đầu tiên nhanh hơn</h2>
+        <section class="day20-section">
+          <h3>Journey đã tối ưu</h3>
+          <p>Onboarding thiết kế lại đưa học sinh từ dashboard tới lesson hiện tại, Start speaking, feedback, XP và mission reward thay vì bắt xem product tour dài.</p>
+          <div class="day20-flow">
+            <span>Dashboard: mission, XP, streak, Continue learning</span>
+            <span>Grade + placement được giữ để cá nhân hóa Trail</span>
+            <span>Mở lesson detail trong Trail hiện tại</span>
+            <span>Start speaking và permission mic đúng thời điểm</span>
+            <span>User hoàn thành speaking session</span>
+            <span>Feedback, XP, mission reward và progress hiển thị ngay</span>
+            <span>Aha moment: "Mình vừa nói xong và thấy mình tiến bộ"</span>
+          </div>
+          <table>
+            <tr><th>Activation</th><td>User hoàn thành speaking session đầu tiên có feedback/XP.</td></tr>
+            <tr><th>Activation Rate</th><td>New users hoàn thành speaking session đầu tiên / users bắt đầu onboarding.</td></tr>
+            <tr><th>Time to First Core Action</th><td>Thời gian từ lúc vào app đến khi speaking_session_completed.</td></tr>
+            <tr><th>Time to Value</th><td>Thời gian từ lúc vào app đến feedback/XP đầu tiên.</td></tr>
+          </table>
+        </section>
+      `,
+      d20before: `
+        <p class="subtle">06 - Before/After & Recovery Path</p>
+        <h2>Cac cai thien cu the</h2>
+        <section class="day20-section">
+          <h3>So sanh Before / After</h3>
+          <table>
+            <tr><th>Tieu chi</th><th>Before</th><th>After</th><th>Ly do</th></tr>
+            <tr><td>So buoc toi Core Action</td><td>Khoang 7-8</td><td>Khoang 5-6</td><td>Delay lab rationale va review nang cao den sau first value.</td></tr>
+            <tr><td>Truongs</td><td>0 typed, level choice required</td><td>0 typed, one-tap level retained</td><td>Giu setup gon nhe.</td></tr>
+            <tr><td>Permission</td><td>Mic explained during setup</td><td>Mic explained right before speaking</td><td>Permission de duoc chap nhan hon khi value xuat hien ngay.</td></tr>
+            <tr><td>Time to Value</td><td>2-3 minutes</td><td>Muc tieu duoi 2 phut</td><td>Feedback xuat hien sau cau noi that dau tien.</td></tr>
+            <tr><td>Recovery Path</td><td>Transcript edit and pronunciation dispute exist</td><td>Keep both and show how they return to practice</td><td>Recovery ho tro niem tin va retention.</td></tr>
+          </table>
+          <div class="day20-note">Recovery path chinh: neu AI nghe sai "cappuccino", learner sua transcript, xac nhan, xem ket qua tinh lai va tiep tuc journey noi thay vi dung o loi.</div>
+        </section>
+      `,
+      d20ladder: `
+        <p class="subtle">07 - Measurement Ladder</p>
+        <h2>Metric theo tung tang funnel</h2>
+        <section class="day20-section">
+          <h3>Measurement Ladder</h3>
+          <table>
+            <tr><th>Ladder Stage</th><th>Metric</th><th>Question Answered</th></tr>
+            <tr><td>Marketing / Traffic</td><td>Visitor landing page, click tu campaign</td><td>Learner co tim thay san pham khong?</td></tr>
+            <tr><td>Visitor</td><td>Bat dau onboarding</td><td>Visitor co y dinh dung thu khong?</td></tr>
+            <tr><td>Activation</td><td>Da xem feedback dau tien</td><td>New user co cham toi first value khong?</td></tr>
+            <tr><td>Core Action</td><td>So phien luyen tap hoan thanh</td><td>User co thuc hien hanh vi tao value khong?</td></tr>
+            <tr><td>Retention</td><td>Weekly practice retention</td><td>Activated learner co quay lai cac tuan sau khong?</td></tr>
+            <tr><td>Revenue</td><td>Ty le nang cap tra phi</td><td>Value lap lai co ho tro ket qua business khong?</td></tr>
+          </table>
+        </section>
+      `,
+      d20northstar: `
+        <p class="subtle">08 - North Star & Input Metrics</p>
+        <h2>Logic North Star</h2>
+        <section class="day20-section">
+          <h3>Primary Metric</h3>
+          <p><strong>North Star Metric:</strong> Weekly completed speaking practice sessions with feedback reviewed.</p>
+          <ul>
+            <li><strong>Input Metric 1:</strong> First feedback completion rate.</li>
+            <li><strong>Input Metric 2:</strong> Speaking sessions completed per active user per week.</li>
+            <li><strong>Input Metric 3:</strong> Feedback review rate.</li>
+          </ul>
+          <p style="margin-top:10px"><strong>Leading indicator:</strong> activation rate, because users who reach first feedback are more likely to return.</p>
+          <p><strong>Lagging indicator:</strong> monthly retention or paid conversion, because these reflect longer-term value.</p>
+          <div class="day20-note">Trade-off: stronger reminders may increase short-term sessions, but too many reminders can feel pushy and increase opt-outs, lowering long-term retention.</div>
+        </section>
+      `,
+      d20nature: `
+        <p class="subtle">09 - Nature vs Nurture</p>
+        <h2>Nhịp tự nhiên và trigger từ sản phẩm</h2>
+        <section class="day20-section">
+          <h3>Nature vs Nurture Table</h3>
+          <table>
+            <tr><th>Trường</th><th>Quyết định theo slide</th></tr>
+            <tr><td>Natural Frequency</td><td>Daily hoặc near-daily vì speaking cần luyện ngắn, lặp lại đều.</td></tr>
+            <tr><td>Internal Trigger</td><td>“Em sợ mình nói chưa tốt”, “em cần luyện trước buổi học/kiểm tra”, “em muốn giữ streak”.</td></tr>
+            <tr><td>External Trigger</td><td>Daily mission, Continue learning CTA, progress, streak và XP trên dashboard.</td></tr>
+            <tr><td>Nurture Activity</td><td>Daily missions, XP, streak, progress, Continue learning CTA, hero và mission overview.</td></tr>
+            <tr><td>Logic</td><td>Nurture layer hợp lý vì tăng động lực cho hành vi có utility thật, không ép habit giả.</td></tr>
+            <tr><td>Metric</td><td>DAU/WAU, D7 Retention, mission completed, reward claimed.</td></tr>
+          </table>
+        </section>
+      `,
+      d20hook: `
+        <p class="subtle">10 - Hook Model</p>
+        <h2>Review vòng habit</h2>
+        <section class="day20-section">
+          <h3>Hook Model</h3>
+          <table>
+            <tr><th>Hook thành phần</th><th>Quyết định theo slide</th></tr>
+            <tr><td>Trigger</td><td>Internal: sợ nói chưa tốt, cần luyện trước buổi học/kiểm tra, muốn giữ streak. External: mission, Continue learning, XP/progress.</td></tr>
+            <tr><td>Action</td><td>Mở lesson hiện tại -> Start speaking -> hoàn thành session.</td></tr>
+            <tr><td>Reward</td><td>Feedback, XP, completion, mission reward và cảm giác thấy mình tiến bộ.</td></tr>
+            <tr><td>Investment</td><td>Tích lũy progress/streak, level, lỗi đã lưu và lịch sử luyện tập.</td></tr>
+            <tr><td>Next Trigger</td><td>Lỗi đã lưu hoặc lesson tiếp theo tạo prompt luyện tập ngày mai.</td></tr>
+            <tr><td>User Impact</td><td>Tích cực khi daily mission khuếch đại nhu cầu thật, không ép học sinh dùng app vì FOMO giả.</td></tr>
+          </table>
+        </section>
+      `,
+      d20tracking: `
+        <p class="subtle">11 - Metric Tracking Requirement</p>
+        <h2>Event cần có để tính metric</h2>
+        <section class="day20-section">
+          <h3>Event Table</h3>
+          <table>
+            <tr><th>Event Name</th><th>Recorded When</th><th>Core Properties</th><th>Metric</th><th>Duplicate Control</th></tr>
+            <tr><td>onboarding_completed</td><td>User lưu xong grade + placement</td><td>user_id, grade_level, placement_level</td><td>Onboarding completion rate</td><td>Một lần cho mỗi onboarding completion</td></tr>
+            <tr><td>lesson_opened</td><td>User mở lesson detail</td><td>user_id, unit_id, lesson_id</td><td>Lesson funnel</td><td>Không ghi trùng khi refresh cùng lesson</td></tr>
+            <tr><td>speaking_session_started</td><td>User bắt đầu session</td><td>user_id, lesson_id, topic_version_id, source</td><td>Session start rate</td><td>Một event cho mỗi session_id</td></tr>
+            <tr><td>speaking_session_completed</td><td>User hoàn thành session</td><td>user_id, lesson_id, session_id, xp_earned</td><td>North Star, DAU/WAU, D7 Retention</td><td>Chỉ ghi khi session chuyển từ incomplete sang complete</td></tr>
+            <tr><td>mission_reward_claimed</td><td>Claim mission thành công</td><td>user_id, mission_id, mission_type, reward_points</td><td>Mission/reward engagement</td><td>Không ghi trùng khi refresh hoặc bấm lại</td></tr>
+          </table>
+          <h3>Acceptance tiêu chí</h3>
+          <ul>
+            <li>Events are recorded only after the real user behavior happens.</li>
+            <li>Refresh, retry, and autosave do not create duplicate core events.</li>
+            <li>Every event has user_id, timestamp, and relevant lesson/session properties.</li>
+            <li>Attempt-level events are separated from session-level completion events.</li>
+            <li>Metrics can be calculated without manual interpretation.</li>
+            <li>The system avoids unnecessary personal data or raw audio unless explicitly required and consented to.</li>
+          </ul>
+        </section>
+      `,
+      demo8: `
+        <p class="subtle">12 - 8-minute đường dẫn demo</p>
+        <h2>Luồng trình bày</h2>
+        <section class="day20-section">
+          <h3>Demo Timing</h3>
+          <table>
+            <tr><th>Time</th><th>Content</th></tr>
+            <tr><td>0:00-1:00</td><td>TurTalk phục vụ học sinh THCS Việt Nam, product promise và vấn đề ngại nói.</td></tr>
+            <tr><td>1:00-1:50</td><td>Natural frequency, core action, active user definition.</td></tr>
+            <tr><td>1:50-2:40</td><td>DAU/WAU, D7 Retention và vì sao daily/near-daily phù hợp với speaking practice.</td></tr>
+            <tr><td>2:40-4:20</td><td>Current flow, redesigned onboarding, first core action, activation và mission recovery.</td></tr>
+            <tr><td>4:20-5:15</td><td>Measurement ladder, North Star, input metrics, leading and lagging indicators.</td></tr>
+            <tr><td>5:15-6:20</td><td>Nature vs Nurture và Hook Model: daily missions, XP, streak, progress.</td></tr>
+            <tr><td>6:20-7:15</td><td>Metric tracking requirement and acceptance criteria.</td></tr>
+            <tr><td>7:15-8:00</td><td>Before/After summary and the most important prototype changes.</td></tr>
+          </table>
+        </section>
+      `
+    };
+
+    function updateDay20Panel(name) {
+      const panel = document.getElementById("day20PanelContent");
+      if (!panel) return;
+      panel.innerHTML = day20Panels[name] || day20SummaryPanel;
+      const panelShell = panel.closest(".day20-panel");
+      if (panelShell) panelShell.scrollTop = 0;
+    }
+
+    function renderDots() {
+      document.querySelectorAll("[data-dots]").forEach((dotWrap) => {
+        dotWrap.innerHTML = "";
+        ["welcome", "setup", "home"].forEach((name) => {
+          const dot = document.createElement("span");
+          dot.className = name === activeScreen ? "active-dot" : "";
+          dotWrap.appendChild(dot);
+        });
+      });
+    }
+
+    function showScreen(name) {
+      activeScreen = name;
+      screenEls.forEach((screen) => screen.classList.toggle("active", screen.dataset.screen === name));
+      renderDots();
+      updateDay20Panel(name);
+      if (name === "listening") startTranscriptTyping();
+      if (name !== "listening") window.clearInterval(typingTimer);
+      if (name === "edit") {
+        window.setTimeout(() => {
+          transcriptInput.focus();
+          transcriptInput.setSelectionRange(21, 24);
+        }, 180);
+      }
+    }
+
+    function startTranscriptTyping() {
+      const fullText = "I would like a large cappuccino with oat milk, please.";
+      let index = 0;
+      window.clearInterval(typingTimer);
+      liveTranscript.textContent = "";
+      typingTimer = window.setInterval(() => {
+        liveTranscript.textContent = fullText.slice(0, index) + (index % 2 ? "|" : "");
+        index += 1;
+        if (index > fullText.length) index = 26;
+      }, 80);
+    }
+
+    goButtons.forEach((button) => {
+      button.addEventListener("click", () => showScreen(button.dataset.go));
+    });
+
+    levelButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        levelButtons.forEach((item) => item.classList.remove("selected"));
+        button.classList.add("selected");
+      });
+    });
+
+    optionButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        optionButtons.forEach((item) => item.classList.remove("selected-option"));
+        button.classList.add("selected-option");
+      });
+    });
+
+    document.getElementById("enableMic").addEventListener("click", () => {
+      showScreen("home");
+    });
+
+    confirmEdit.addEventListener("click", () => {
+      transcriptInput.value = transcriptInput.value.replace("cat-puccino", "cappuccino");
+      showScreen("summary");
+    });
+
+    undoEdit.addEventListener("click", () => {
+      transcriptInput.value = "I would like a large cat-puccino";
+      transcriptInput.focus();
+      transcriptInput.setSelectionRange(21, 24);
+    });
+
+    playAudio.addEventListener("click", () => {
+      audioLabel.textContent = "Đang phát bản ghi gốc...";
+      playAudio.style.color = "var(--cyan)";
+      window.setTimeout(() => {
+        audioLabel.textContent = "Bản ghi gốc";
+        playAudio.style.color = "";
+      }, 1400);
+    });
+
+    correctBtn.addEventListener("click", () => {
+      pronunciationCard.classList.add("neutralized");
+      feedbackActions.classList.add("hidden");
+      feedbackToast.classList.add("show");
+      scoreValue.textContent = "88";
+      grammarValue.textContent = "87";
+      errorBadge.textContent = "Phat hien 1 loi";
+    });
+
+    helpfulBtn.addEventListener("click", () => {
+      feedbackActions.classList.add("hidden");
+      feedbackToast.textContent = "Thanks! Your feedback helps tune future coaching.";
+      feedbackToast.classList.add("show");
+    });
+
+    retryAudio.addEventListener("click", () => {
+      retryToast.classList.add("show");
+      scoreValue.textContent = "88";
+      grammarValue.textContent = "87";
+      errorBadge.textContent = "Phat hien 1 loi";
+    });
+
+    renderDots();
+    updateDay20Panel(activeScreen);
+  </script>
+</body>
+</html>
